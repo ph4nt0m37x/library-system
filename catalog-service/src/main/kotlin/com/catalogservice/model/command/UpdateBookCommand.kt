@@ -1,5 +1,5 @@
 package com.catalogservice.model.command
-import com.catalogservice.model.valueObject.BookCategory
+import com.catalogservice.model.entity.BookCategory
 import com.catalogservice.model.valueObject.BookId
 import org.axonframework.modelling.command.TargetAggregateIdentifier
 
@@ -10,7 +10,6 @@ data class UpdateBookCommand(
     val title: String,
     val author: String,
     val description: String?,
-    val publisher: String?,
-    val publicationDate: String?,
+    val publicationYear: Int?,
     val category:  BookCategory?
 )

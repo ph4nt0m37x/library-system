@@ -1,6 +1,14 @@
 package com.catalogservice.model.event
 
-data class BookDeletedEvent(
+import com.catalogservice.model.command.DeleteBookCommand
+import com.catalogservice.model.valueObject.BookId
 
-    val id: BookId
-)
+data class BookDeletedEvent(
+    override val id: BookId
+) : BookEvent(id) {
+
+    constructor(command: DeleteBookCommand) : this(
+        id = command.id
+    )
+}
+

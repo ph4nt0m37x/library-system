@@ -8,11 +8,14 @@ import com.catalogservice.model.common.LabeledEntity
 import com.catalogservice.model.event.BookCreatedEvent
 import com.catalogservice.model.event.BookDeletedEvent
 import com.catalogservice.model.event.BookUpdatedEvent
-import com.catalogservice.model.valueObject.BookCategory
+import com.catalogservice.model.entity.BookCategory
+import com.catalogservice.model.valueObject.BookId
 import jakarta.persistence.AttributeOverride
 import jakarta.persistence.Column
 import jakarta.persistence.EmbeddedId
 import jakarta.persistence.Entity
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import org.axonframework.commandhandling.CommandHandler
 import org.axonframework.eventsourcing.EventSourcingHandler
@@ -36,7 +39,10 @@ class Book() : LabeledEntity {
     private lateinit var title: String
     private lateinit var author: String
     private var description: String? = null
-    private var publicationDate: String? = null
+    private var publicationYear: Int? = null
+
+    @ManyToOne
+    @JoinColumn(name = "category_id")
     private var category: BookCategory? = null
 
     private var deleted: Boolean = false
@@ -44,16 +50,16 @@ class Book() : LabeledEntity {
 
     // CREATE
 
-    @CommandHandler
+        @CommandHandler
     constructor(command: CreateBookCommand) : this() {
 
         val event = BookCreatedEvent(
-            id = command.id,
+            id = BookId(),
             isbn = command.isbn,
             title = command.title,
             author = command.author,
             description = command.description,
-            publicationDate = command.publicationDate,
+            publicationYear = command.publicationYear,
             category = command.category
         )
 
@@ -68,11 +74,10 @@ class Book() : LabeledEntity {
         this.title = event.title
         this.author = event.author
         this.description = event.description
-        this.publicationDate = event.publicationDate
+        this.publicationYear = event.publicationYear
         this.category = event.category
         this.deleted = false
     }
-
 
     // UPDATE
 
@@ -80,12 +85,12 @@ class Book() : LabeledEntity {
     fun update(command: UpdateBookCommand) {
 
         val event = BookUpdatedEvent(
-            id = this.id,
+            id = command.id,
             isbn = command.isbn,
             title = command.title,
             author = command.author,
             description = command.description,
-            publicationDate = command.publicationDate,
+            publicationYear = command.publicationYear,
             category = command.category
         )
 
@@ -99,10 +104,9 @@ class Book() : LabeledEntity {
         this.title = event.title
         this.author = event.author
         this.description = event.description
-        this.publicationDate = event.publicationDate
+        this.publicationYear = event.publicationYear
         this.category = event.category
     }
-
 
     // DELETE
 
@@ -121,7 +125,6 @@ class Book() : LabeledEntity {
     fun on(event: BookDeletedEvent) {
         this.deleted = true
     }
-
 
     // ENTITY
 
