@@ -1,0 +1,65 @@
+services:
+  mysqldb:
+    image: mysql:8.0
+    container_name: membership_service_db
+    restart: always
+    command: [ "--port=3307" ]
+    env_file:
+      - .env
+    environment:
+      MYSQL_DATABASE: membership_service_db
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "3307:3307"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - membership_service_net
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-P", "3307" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  membership-service-app:
+    build:
+      context: .
+    hostname: membership-service_app
+    container_name: membership-service_app
+    depends_on:
+      mysqldb:
+        condition: service_healthy
+    ports:
+      - "8089:8089"
+    env_file:
+      - .env
+    environment:
+      SERVER_PORT: 8089
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}
+
+      #      STUDENT_SERVICE_URL:  ${STUDENT_SERVICE_URL}
+      #      PROFESSOR_SERVICE_URL: ${PROFESSOR_SERVICE_URL}
+
+      SPRING_CLOUD_CONSUL_HOST: consul
+      SPRING_CLOUD_CONSUL_PORT: 8500
+
+    networks:
+      - membership_service_net
+      - shared_net
+
+networks:
+  membership_service_net:
+    name: membership_service_net
+    driver: bridge
+  shared_net:
+    external: true
+
+volumes:
+  db_data:

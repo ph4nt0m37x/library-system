@@ -1,0 +1,33 @@
+package com.membershipservice.repository
+
+import com.membershipservice.model.aggregate.Member
+import com.membershipservice.model.valueObject.Email
+import com.membershipservice.model.valueObject.MemberId
+import com.membershipservice.model.valueObject.MembershipNumber
+import com.membershipservice.model.valueObject.SubscriptionId
+import com.membershipservice.model.view.MemberView
+import com.membershipservice.model.view.SubscriptionPeriodView
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.stereotype.Repository
+import java.time.ZonedDateTime
+
+@Repository
+interface MemberRepository : JpaRepository<Member, MemberId> {
+    fun existsByMembershipNumber(membershipNumber: MembershipNumber): Boolean
+    fun findByEmail(email: Email): Member?
+}
+
+@Repository
+interface MemberViewRepository : JpaRepository<MemberView, MemberId> {
+    fun findByMembershipNumber(membershipNumber: MembershipNumber): MemberView?
+}
+
+@Repository
+interface SubscriptionPeriodViewRepository : JpaRepository<SubscriptionPeriodView, SubscriptionId> {
+    fun findByMemberIdOrderByStartsAtAsc(memberId: MemberId): List<SubscriptionPeriodView>
+    fun existsByMemberIdAndStartsAtLessThanEqualAndEndsAtAfter(
+        memberId: MemberId,
+        startsAt: ZonedDateTime,
+        endsAt: ZonedDateTime
+    ): Boolean
+}

@@ -15,9 +15,9 @@ services:
     volumes:
       - db_data:/var/lib/mysql
     networks:
-      - services_net
+      - catalog_service_net
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-P", "3306" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -47,12 +47,12 @@ services:
       SPRING_CLOUD_CONSUL_PORT: 8500
 
     networks:
-      - services_net
+      - catalog_service_net
       - shared_net
 
 networks:
-  services_net:
-    name: services_net
+  catalog_service_net:
+    name: catalog_service_net
     driver: bridge
   shared_net:
     external: true
