@@ -13,6 +13,12 @@ interface BookRepository : JpaRepository<Book, BookId>
 @Repository
 interface BookCategoryRepository : JpaRepository<BookCategory, Long>
 
-@Repository
-interface BookViewRepository : JpaRepository<BookView, BookId>
+interface BookViewRepository : JpaRepository<BookView, BookId> {
+
+    fun findByTitleContainingIgnoreCase(title: String): List<BookView>
+
+    fun findByAuthorContainingIgnoreCase(author: String): List<BookView>
+
+    fun findByCategory_Id(categoryId: Long): List<BookView>
+}
 

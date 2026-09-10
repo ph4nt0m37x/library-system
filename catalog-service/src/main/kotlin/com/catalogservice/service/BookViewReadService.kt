@@ -6,5 +6,8 @@ import com.catalogservice.model.view.BookView
 interface BookViewReadService {
     fun findById(id: BookId): BookView?
     fun findAll(): List<BookView>
+    fun searchByTitle(title: String): List<BookView>
+    fun searchByAuthor(author: String): List<BookView>
+    fun filterByCategory(categoryId: Long): List<BookView>
 }
 

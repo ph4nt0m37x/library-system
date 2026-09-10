@@ -22,7 +22,7 @@ data class BookView(
 
     val description: String?,
 
-    val publicationYear: String?,
+    val publicationYear: Int?,
 
     @ManyToOne
     @JoinColumn(name = "category_id")

@@ -7,6 +7,7 @@ import com.catalogservice.model.valueObject.BookId
 import com.catalogservice.model.valueObject.dto.CreateBookDTO
 import com.catalogservice.model.valueObject.dto.DeleteBookDTO
 import com.catalogservice.model.valueObject.dto.UpdateBookDTO
+import com.catalogservice.model.view.BookView
 import com.catalogservice.service.BookService
 import com.catalogservice.service.BookViewReadService
 import io.swagger.v3.oas.annotations.Operation
@@ -87,6 +88,35 @@ class BookRestApi(
                     id = BookId(commandDto.id)
                 )
             )
+        )
+
+    @Operation(summary = "Search books by title", description = "Search books whose title contains the given text.")
+    @GetMapping("/search/title")
+    fun searchByTitle(
+        @RequestParam title: String
+    ): ResponseEntity<List<BookView>> =
+        ResponseEntity.ok(
+            bookViewReadService.searchByTitle(title)
+        )
+
+
+    @Operation(summary = "Search books by author", description = "Search books whose author contains the given text.")
+    @GetMapping("/search/author")
+    fun searchByAuthor(
+        @RequestParam author: String
+    ): ResponseEntity<List<BookView>> =
+        ResponseEntity.ok(
+            bookViewReadService.searchByAuthor(author)
+        )
+
+
+    @Operation(summary = "Filter books by category", description = "Get books belonging to a specific category.")
+    @GetMapping("/filter/category")
+    fun filterByCategory(
+        @RequestParam categoryId: Long
+    ): ResponseEntity<List<BookView>> =
+        ResponseEntity.ok(
+            bookViewReadService.filterByCategory(categoryId)
         )
 }
 

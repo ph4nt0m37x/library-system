@@ -18,5 +18,16 @@ class BookViewReadServiceImpl(
     override fun findAll(): List<BookView> {
         return bookViewRepository.findAll()
     }
+    override fun searchByTitle(title: String): List<BookView> {
+        return bookViewRepository.findByTitleContainingIgnoreCase(title)
+    }
+
+    override fun searchByAuthor(author: String): List<BookView> {
+        return bookViewRepository.findByAuthorContainingIgnoreCase(author)
+    }
+
+    override fun filterByCategory(categoryId: Long): List<BookView> {
+        return bookViewRepository.findByCategory_Id(categoryId)
+    }
 }
 
