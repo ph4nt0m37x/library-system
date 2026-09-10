@@ -28,6 +28,12 @@ class MemberViewReadServiceImpl(
     override fun findAll(): List<MemberResponse> =
         memberViewRepository.findAll().map { it.toResponse() }
 
+    override fun hasActiveSubscription(memberId: MemberId): Boolean {
+        val now = ZonedDateTime.now()
+        return subscriptionPeriodViewRepository
+            .existsByMemberIdAndStartsAtLessThanEqualAndEndsAtAfter(memberId, now, now)
+    }
+
     private fun MemberView.toResponse(): MemberResponse {
         val now = ZonedDateTime.now()
         val history = subscriptionPeriodViewRepository

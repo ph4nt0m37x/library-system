@@ -8,4 +8,5 @@ interface MemberViewReadService {
     fun findById(memberId: MemberId): MemberResponse?
     fun findByMembershipNumber(membershipNumber: MembershipNumber): MemberResponse?
     fun findAll(): List<MemberResponse>
+    fun hasActiveSubscription(memberId: MemberId): Boolean
 }

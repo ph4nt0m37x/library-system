@@ -58,6 +58,11 @@ class MemberRestApi(
             ?.let { ResponseEntity.ok(it) }
             ?: ResponseEntity.notFound().build()
 
+    @Operation(summary = "Check whether a member has an active subscription")
+    @GetMapping("/{memberId}/subscription-status")
+    fun hasActiveSubscription(@PathVariable memberId: String): ResponseEntity<Boolean> =
+        ResponseEntity.ok(memberViewReadService.hasActiveSubscription(MemberId(memberId)))
+
     @Operation(summary = "Register a member")
     @PostMapping("/register")
     fun registerMember(@RequestBody dto: RegisterMemberDTO): CompletableFuture<ResponseEntity<CommandResponse>> =

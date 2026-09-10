@@ -9,6 +9,7 @@ import com.membershipservice.model.view.MemberView
 import com.membershipservice.model.view.SubscriptionPeriodView
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
+import java.time.ZonedDateTime
 
 @Repository
 interface MemberRepository : JpaRepository<Member, MemberId> {
@@ -24,4 +25,9 @@ interface MemberViewRepository : JpaRepository<MemberView, MemberId> {
 @Repository
 interface SubscriptionPeriodViewRepository : JpaRepository<SubscriptionPeriodView, SubscriptionId> {
     fun findByMemberIdOrderByStartsAtAsc(memberId: MemberId): List<SubscriptionPeriodView>
+    fun existsByMemberIdAndStartsAtLessThanEqualAndEndsAtAfter(
+        memberId: MemberId,
+        startsAt: ZonedDateTime,
+        endsAt: ZonedDateTime
+    ): Boolean
 }
