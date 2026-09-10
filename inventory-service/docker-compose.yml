@@ -1,0 +1,61 @@
+services:
+  mysqldb:
+    image: mysql:8.0
+    container_name: inventory_service_db
+    restart: always
+    env_file:
+      - .env
+    environment:
+      MYSQL_DATABASE: inventory_service_db
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "5439:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - services_net
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  inventory-service-app:
+    build:
+      context: .
+    hostname: inventory-service-app
+    container_name: inventory-service-app
+    depends_on:
+      mysqldb:
+        condition: service_healthy
+    ports:
+      - "8089:8089"
+    env_file:
+      - .env
+    environment:
+      SERVER_PORT: 8089
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}
+
+      SPRING_CLOUD_CONSUL_HOST: consul
+      SPRING_CLOUD_CONSUL_PORT: 8500
+
+    networks:
+      - services_net
+      - shared_net
+
+networks:
+  services_net:
+    name: services_net
+    driver: bridge
+  shared_net:
+    external: true
+
+volumes:
+  db_data:
