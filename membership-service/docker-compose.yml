@@ -3,6 +3,7 @@ services:
     image: mysql:8.0
     container_name: membership_service_db
     restart: always
+    command: [ "--port=3307" ]
     env_file:
       - .env
     environment:
@@ -11,13 +12,13 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     ports:
-      - "3307:3306"
+      - "3307:3307"
     volumes:
       - db_data:/var/lib/mysql
     networks:
-      - services_net
+      - membership_service_net
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-P", "3307" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -50,12 +51,12 @@ services:
       SPRING_CLOUD_CONSUL_PORT: 8500
 
     networks:
-      - services_net
+      - membership_service_net
       - shared_net
 
 networks:
-  services_net:
-    name: services_net
+  membership_service_net:
+    name: membership_service_net
     driver: bridge
   shared_net:
     external: true
