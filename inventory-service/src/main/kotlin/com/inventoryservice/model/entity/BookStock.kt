@@ -29,6 +29,12 @@ class BookStock(
     @Column(name = "book_id", nullable = false)
     val bookId: String,
 
-    @Column(nullable = false)
-    var quantity: Int = 0
-)
+    @Column(name = "total_quantity", nullable = false)
+    var totalQuantity: Int = 0,
+
+    @Column(name = "available_quantity", nullable = false)
+    var availableQuantity: Int = 0
+) {
+    val borrowedQuantity: Int
+        get() = totalQuantity - availableQuantity
+}

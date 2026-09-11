@@ -11,7 +11,7 @@ import com.inventoryservice.service.TransferService
 import io.swagger.v3.oas.annotations.Operation
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-
+//VIEW THE TRANSFER STATUS MAYBE LMFAO
 @RestController
 @RequestMapping("/api/transfers")
 class TransferRestApi(

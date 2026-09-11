@@ -1,10 +1,12 @@
 package com.inventoryservice.service.impl
 
-
 import com.inventoryservice.model.command.library.AddBookStockCommand
+import com.inventoryservice.model.command.library.BorrowBookStockCommand
 import com.inventoryservice.model.command.library.CreateLibraryCommand
 import com.inventoryservice.model.command.library.DeleteLibraryCommand
+import com.inventoryservice.model.command.library.MarkBookStockLostCommand
 import com.inventoryservice.model.command.library.RemoveBookStockCommand
+import com.inventoryservice.model.command.library.ReturnBookStockCommand
 import com.inventoryservice.model.command.library.UpdateLibraryCommand
 import com.inventoryservice.model.valueObject.LibraryId
 import com.inventoryservice.service.LibraryService
@@ -39,6 +41,21 @@ class LibraryServiceImpl(
 
     override fun removeBookStock(
         command: RemoveBookStockCommand
+    ): CompletableFuture<LibraryId> =
+        commandGateway.send(command)
+
+    override fun borrowBookStock(
+        command: BorrowBookStockCommand
+    ): CompletableFuture<LibraryId> =
+        commandGateway.send(command)
+
+    override fun returnBookStock(
+        command: ReturnBookStockCommand
+    ): CompletableFuture<LibraryId> =
+        commandGateway.send(command)
+
+    override fun markBookStockLost(
+        command: MarkBookStockLostCommand
     ): CompletableFuture<LibraryId> =
         commandGateway.send(command)
 }
