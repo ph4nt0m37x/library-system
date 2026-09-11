@@ -3,6 +3,7 @@ package com.catalogservice.model.event
 import com.catalogservice.model.command.CreateBookCommand
 import com.catalogservice.model.entity.BookCategory
 import com.catalogservice.model.valueObject.BookId
+import com.catalogservice.model.valueObject.Money
 
 data class BookCreatedEvent(
     override val id: BookId,
@@ -11,6 +12,7 @@ data class BookCreatedEvent(
     val author: String,
     val description: String?,
     val publicationYear: Int?,
+    val price: Money,
     val category: BookCategory?
 ) : BookEvent(id) {
 
@@ -21,18 +23,8 @@ data class BookCreatedEvent(
         author = command.author,
         description = command.description,
         publicationYear = command.publicationYear,
+        price = command.price,
         category = command.category
     )
 
-//    override fun toExternalEvent(): BookCreatedExternalEvent {
-//        return BookCreatedExternalEvent(
-//            bookId = this.bookId,
-//            isbn = this.isbn,
-//            title = this.title,
-//            author = this.author,
-//            description = this.description,
-//            publicationYear = this.publicationYear,
-//            category = this.category
-//        )
-//    }
 }

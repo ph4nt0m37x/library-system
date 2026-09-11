@@ -4,6 +4,7 @@ import com.catalogservice.model.common.Identifier
 import com.catalogservice.model.common.LabeledEntity
 import com.catalogservice.model.entity.BookCategory
 import com.catalogservice.model.valueObject.BookId
+import com.catalogservice.model.valueObject.Money
 import jakarta.persistence.*
 
 @Entity
@@ -23,6 +24,9 @@ data class BookView(
     val description: String?,
 
     val publicationYear: Int?,
+
+    @Embedded
+    var price: Money,
 
     @ManyToOne
     @JoinColumn(name = "category_id")

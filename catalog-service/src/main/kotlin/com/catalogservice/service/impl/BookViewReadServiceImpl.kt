@@ -1,6 +1,7 @@
 package com.catalogservice.service.impl
 
 import com.catalogservice.model.valueObject.BookId
+import com.catalogservice.model.valueObject.dto.BookPriceResponseDTO
 import com.catalogservice.model.view.BookView
 import com.catalogservice.repository.BookViewRepository
 import com.catalogservice.service.BookViewReadService
@@ -28,6 +29,17 @@ class BookViewReadServiceImpl(
 
     override fun filterByCategory(categoryId: Long): List<BookView> {
         return bookViewRepository.findByCategory_Id(categoryId)
+    }
+
+    override fun getBookPrice(bookId: String): BookPriceResponseDTO {
+        val book = bookViewRepository.findById(BookId(bookId))
+            .orElseThrow {
+                RuntimeException("Book not found")
+            }
+
+        return BookPriceResponseDTO(
+            price = book.price.amount
+        )
     }
 }
 

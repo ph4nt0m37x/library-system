@@ -1,6 +1,7 @@
 package com.catalogservice.service
 
 import com.catalogservice.model.valueObject.BookId
+import com.catalogservice.model.valueObject.dto.BookPriceResponseDTO
 import com.catalogservice.model.view.BookView
 
 interface BookViewReadService {
@@ -9,5 +10,6 @@ interface BookViewReadService {
     fun searchByTitle(title: String): List<BookView>
     fun searchByAuthor(author: String): List<BookView>
     fun filterByCategory(categoryId: Long): List<BookView>
+    fun getBookPrice(bookId: String): BookPriceResponseDTO
 }
 
