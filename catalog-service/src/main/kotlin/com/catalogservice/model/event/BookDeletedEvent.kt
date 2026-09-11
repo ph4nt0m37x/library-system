@@ -10,5 +10,11 @@ data class BookDeletedEvent(
     constructor(command: DeleteBookCommand) : this(
         id = command.id
     )
+
+        override fun toExternalEvent(): BookDeletedExternalEvent {
+        return BookDeletedExternalEvent(
+            bookId = this.id,
+        )
+    }
 }
 

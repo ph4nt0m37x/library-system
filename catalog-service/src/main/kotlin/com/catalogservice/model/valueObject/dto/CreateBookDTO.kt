@@ -1,6 +1,7 @@
 package com.catalogservice.model.valueObject.dto
 
 import com.catalogservice.model.entity.BookCategory
+import java.math.BigDecimal
 
 data class CreateBookDTO(
     val isbn: String,
@@ -9,5 +10,6 @@ data class CreateBookDTO(
     val description: String?,
     val publisher: String?,
     val publicationYear: Int?,
+    val price: BigDecimal,
     val category: BookCategory?
 )

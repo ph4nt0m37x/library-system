@@ -5,13 +5,15 @@ import com.catalogservice.model.command.DeleteBookCommand
 import com.catalogservice.model.command.UpdateBookCommand
 import com.catalogservice.model.common.Identifier
 import com.catalogservice.model.common.LabeledEntity
+import com.catalogservice.model.entity.BookCategory
 import com.catalogservice.model.event.BookCreatedEvent
 import com.catalogservice.model.event.BookDeletedEvent
 import com.catalogservice.model.event.BookUpdatedEvent
-import com.catalogservice.model.entity.BookCategory
 import com.catalogservice.model.valueObject.BookId
+import com.catalogservice.model.valueObject.Money
 import jakarta.persistence.AttributeOverride
 import jakarta.persistence.Column
+import jakarta.persistence.Embedded
 import jakarta.persistence.EmbeddedId
 import jakarta.persistence.Entity
 import jakarta.persistence.JoinColumn
@@ -41,6 +43,9 @@ class Book() : LabeledEntity {
     private var description: String? = null
     private var publicationYear: Int? = null
 
+    @Embedded
+    private lateinit var price: Money
+
     @ManyToOne
     @JoinColumn(name = "category_id")
     private var category: BookCategory? = null
@@ -50,7 +55,7 @@ class Book() : LabeledEntity {
 
     // CREATE
 
-        @CommandHandler
+    @CommandHandler
     constructor(command: CreateBookCommand) : this() {
 
         val event = BookCreatedEvent(
@@ -60,6 +65,7 @@ class Book() : LabeledEntity {
             author = command.author,
             description = command.description,
             publicationYear = command.publicationYear,
+            price = command.price,
             category = command.category
         )
 
@@ -75,9 +81,11 @@ class Book() : LabeledEntity {
         this.author = event.author
         this.description = event.description
         this.publicationYear = event.publicationYear
+        this.price = event.price
         this.category = event.category
         this.deleted = false
     }
+
 
     // UPDATE
 
@@ -91,6 +99,7 @@ class Book() : LabeledEntity {
             author = command.author,
             description = command.description,
             publicationYear = command.publicationYear,
+            price = command.price,
             category = command.category
         )
 
@@ -105,8 +114,10 @@ class Book() : LabeledEntity {
         this.author = event.author
         this.description = event.description
         this.publicationYear = event.publicationYear
+        this.price = event.price
         this.category = event.category
     }
+
 
     // DELETE
 
@@ -125,6 +136,7 @@ class Book() : LabeledEntity {
     fun on(event: BookDeletedEvent) {
         this.deleted = true
     }
+
 
     // ENTITY
 
