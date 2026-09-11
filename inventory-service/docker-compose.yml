@@ -11,11 +11,11 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     ports:
-      - "5439:3306"
+      - "5440:3306"
     volumes:
       - db_data:/var/lib/mysql
     networks:
-      - services_net
+      - inventory_net
     healthcheck:
       test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
       interval: 10s
@@ -47,12 +47,12 @@ services:
       SPRING_CLOUD_CONSUL_PORT: 8500
 
     networks:
-      - services_net
+      - inventory_net
       - shared_net
 
 networks:
-  services_net:
-    name: services_net
+  inventory_net:
+    name: inventory_net
     driver: bridge
   shared_net:
     external: true
