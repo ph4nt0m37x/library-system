@@ -5,6 +5,7 @@ import com.catalogservice.model.command.DeleteBookCommand
 import com.catalogservice.model.command.UpdateBookCommand
 import com.catalogservice.model.valueObject.BookId
 import com.catalogservice.model.valueObject.Money
+import com.catalogservice.model.valueObject.dto.BookPriceResponseDTO
 import com.catalogservice.model.valueObject.dto.CreateBookDTO
 import com.catalogservice.model.valueObject.dto.DeleteBookDTO
 import com.catalogservice.model.valueObject.dto.UpdateBookDTO
@@ -120,6 +121,14 @@ class BookRestApi(
     ): ResponseEntity<List<BookView>> =
         ResponseEntity.ok(
             bookViewReadService.filterByCategory(categoryId)
+        )
+
+    @GetMapping("/{bookId}/price")
+    fun getBookPrice(
+        @PathVariable bookId: String
+    ): ResponseEntity<BookPriceResponseDTO> =
+        ResponseEntity.ok(
+            bookViewReadService.getBookPrice(bookId)
         )
 }
 
