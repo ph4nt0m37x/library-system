@@ -7,13 +7,19 @@ import com.inventoryservice.model.entity.BookStock
 import com.inventoryservice.model.command.library.CreateLibraryCommand
 import com.inventoryservice.model.command.library.DeleteLibraryCommand
 import com.inventoryservice.model.command.library.UpdateLibraryCommand
+import com.inventoryservice.model.command.library.AddBookStockCommand
+import com.inventoryservice.model.command.library.RemoveBookStockCommand
+import com.inventoryservice.model.command.library.BorrowBookStockCommand
+import com.inventoryservice.model.command.library.ReturnBookStockCommand
 import com.inventoryservice.model.event.library.LibraryCreatedEvent
 import com.inventoryservice.model.event.library.LibraryDeletedEvent
 import com.inventoryservice.model.event.library.LibraryUpdatedEvent
-import com.inventoryservice.model.command.library.AddBookStockCommand
-import com.inventoryservice.model.command.library.RemoveBookStockCommand
 import com.inventoryservice.model.event.library.BookStockIncreasedEvent
 import com.inventoryservice.model.event.library.BookStockDecreasedEvent
+import com.inventoryservice.model.event.library.BookStockBorrowedEvent
+import com.inventoryservice.model.event.library.BookStockReturnedEvent
+import com.inventoryservice.model.command.library.MarkBookStockLostCommand
+import com.inventoryservice.model.event.library.BookStockMarkedLostEvent
 import jakarta.persistence.AttributeOverride
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
@@ -70,7 +76,6 @@ class Library() : LabeledEntity {
         this.deleted = false
     }
 
-
     // UPDATE
 
     @CommandHandler
@@ -107,6 +112,7 @@ class Library() : LabeledEntity {
 
 
     // ADD BOOK STOCK
+    // Physically adds new copies to the library.
 
     @CommandHandler
     fun increaseStock(command: AddBookStockCommand) {
@@ -129,13 +135,15 @@ class Library() : LabeledEntity {
         }
 
         if (existingStock != null) {
-            existingStock.quantity += event.quantity
+            existingStock.totalQuantity += event.quantity
+            existingStock.availableQuantity += event.quantity
         } else {
             stock.add(
                 BookStock(
                     libraryId = this.id.value,
                     bookId = event.bookId,
-                    quantity = event.quantity
+                    totalQuantity = event.quantity,
+                    availableQuantity = event.quantity
                 )
             )
         }
@@ -143,6 +151,7 @@ class Library() : LabeledEntity {
 
 
     // REMOVE BOOK STOCK
+    // Physically removes copies from the library.
 
     @CommandHandler
     fun decreaseStock(command: RemoveBookStockCommand) {
@@ -159,8 +168,8 @@ class Library() : LabeledEntity {
             "Book is not in this library"
         }
 
-        require(existingStock.quantity >= command.quantity) {
-            "Not enough copies available"
+        require(existingStock.availableQuantity >= command.quantity) {
+            "Not enough available copies"
         }
 
         val event = BookStockDecreasedEvent(command)
@@ -177,7 +186,129 @@ class Library() : LabeledEntity {
         }
 
         existingStock?.let {
-            it.quantity -= event.quantity
+            it.totalQuantity -= event.quantity
+            it.availableQuantity -= event.quantity
+        }
+    }
+
+
+    // BORROW BOOK
+    // A copy is borrowed, so only available decreases.
+
+    @CommandHandler
+    fun borrowStock(command: BorrowBookStockCommand) {
+
+        require(command.quantity > 0) {
+            "Quantity must be greater than zero"
+        }
+
+        val existingStock = stock.find {
+            it.bookId == command.bookId
+        }
+
+        require(existingStock != null) {
+            "Book is not in this library"
+        }
+
+        require(existingStock.availableQuantity >= command.quantity) {
+            "Not enough available copies"
+        }
+
+        val event = BookStockBorrowedEvent(command)
+
+        this.on(event)
+        AggregateLifecycle.apply(event)
+    }
+
+    @EventSourcingHandler
+    fun on(event: BookStockBorrowedEvent) {
+
+        val existingStock = stock.find {
+            it.bookId == event.bookId
+        }
+
+        existingStock?.let {
+            it.availableQuantity -= event.quantity
+        }
+    }
+
+
+    // RETURN BOOK
+    // A borrowed copy comes back, so available increases.
+
+    @CommandHandler
+    fun returnStock(command: ReturnBookStockCommand) {
+
+        require(command.quantity > 0) {
+            "Quantity must be greater than zero"
+        }
+
+        val existingStock = stock.find {
+            it.bookId == command.bookId
+        }
+
+        require(existingStock != null) {
+            "Book is not in this library"
+        }
+
+        require(existingStock.availableQuantity + command.quantity <= existingStock.totalQuantity) {
+            "Cannot return more copies than the total stock"
+        }
+
+        val event = BookStockReturnedEvent(command)
+
+        this.on(event)
+        AggregateLifecycle.apply(event)
+    }
+
+    @EventSourcingHandler
+    fun on(event: BookStockReturnedEvent) {
+
+        val existingStock = stock.find {
+            it.bookId == event.bookId
+        }
+
+        existingStock?.let {
+            it.availableQuantity += event.quantity
+        }
+    }
+
+    @CommandHandler
+    fun markStockLost(command: MarkBookStockLostCommand) {
+
+        require(command.quantity > 0) {
+            "Quantity must be greater than zero"
+        }
+
+        val existingStock = stock.find {
+            it.bookId == command.bookId
+        }
+
+        require(existingStock != null) {
+            "Book is not in this library"
+        }
+
+        require(
+            existingStock.totalQuantity - existingStock.availableQuantity >= command.quantity
+        ) {
+            "Not enough borrowed copies to mark as lost"
+        }
+
+        val event = BookStockMarkedLostEvent(command)
+
+        this.on(event)
+        AggregateLifecycle.apply(event)
+    }
+
+    @EventSourcingHandler
+    fun on(event: BookStockMarkedLostEvent) {
+
+        val existingStock = stock.find {
+            it.bookId == event.bookId
+        }
+
+        existingStock?.let {
+            it.totalQuantity -= event.quantity
         }
     }
 

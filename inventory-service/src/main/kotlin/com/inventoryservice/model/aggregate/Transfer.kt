@@ -128,12 +128,16 @@ class Transfer() : LabeledEntity {
 
     @CommandHandler
     fun ship(command: ShipTransferCommand) {
-
         require(status == TransferStatus.ACCEPTED) {
             "Only accepted transfers can be shipped"
         }
 
-        val event = TransferShippedEvent(command)
+        val event = TransferShippedEvent(
+            command = command,
+            sourceLibraryId = sourceLibraryId,
+            bookId = bookId,
+            quantity = quantity
+        )
 
         this.on(event)
         AggregateLifecycle.apply(event)
@@ -195,12 +199,16 @@ class Transfer() : LabeledEntity {
 
     @CommandHandler
     fun complete(command: CompleteTransferCommand) {
-
         require(status == TransferStatus.SHIPPED) {
             "Only shipped transfers can be completed"
         }
 
-        val event = TransferCompletedEvent(command)
+        val event = TransferCompletedEvent(
+            command = command,
+            destinationLibraryId = destinationLibraryId,
+            bookId = bookId,
+            quantity = quantity
+        )
 
         this.on(event)
         AggregateLifecycle.apply(event)
