@@ -19,6 +19,19 @@ class BookViewReadServiceImpl(
     override fun findAll(): List<BookView> {
         return bookViewRepository.findAll()
     }
+
+    override fun findAllAvailable(): List<BookView> {
+        return bookViewRepository.findAllByDeletedFalse()
+    }
+
+    override fun existsByIsbn(isbn: String): Boolean {
+        return bookViewRepository.existsByIsbn(isbn)
+    }
+
+    override fun existsByIsbnAndIdNot(isbn: String, id: BookId): Boolean {
+        return bookViewRepository.existsByIsbnAndIdNot(isbn, id)
+    }
+
     override fun searchByTitle(title: String): List<BookView> {
         return bookViewRepository.findByTitleContainingIgnoreCase(title)
     }
@@ -31,15 +44,10 @@ class BookViewReadServiceImpl(
         return bookViewRepository.findByCategory_Id(categoryId)
     }
 
-    override fun getBookPrice(bookId: String): BookPriceResponseDTO {
-        val book = bookViewRepository.findById(BookId(bookId))
-            .orElseThrow {
-                RuntimeException("Book not found")
-            }
-
-        return BookPriceResponseDTO(
-            price = book.price.amount
-        )
+    override fun getBookPrice(bookId: String): BookPriceResponseDTO? {
+        return bookViewRepository.findById(BookId(bookId))
+            .map { BookPriceResponseDTO(price = it.price.amount) }
+            .orElse(null)
     }
 }
 

@@ -1,4 +1,5 @@
 package com.catalogservice.model.command
+
 import com.catalogservice.model.entity.BookCategory
 import com.catalogservice.model.valueObject.BookId
 import com.catalogservice.model.valueObject.Money
@@ -13,5 +14,5 @@ data class UpdateBookCommand(
     val description: String?,
     val publicationYear: Int?,
     val price: Money,
-    val category:  BookCategory?
+    val category: BookCategory?
 )

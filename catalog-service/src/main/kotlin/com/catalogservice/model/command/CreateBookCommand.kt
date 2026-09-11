@@ -1,10 +1,7 @@
 package com.catalogservice.model.command
 
 import com.catalogservice.model.entity.BookCategory
-import com.catalogservice.model.valueObject.BookId
 import com.catalogservice.model.valueObject.Money
-import org.axonframework.modelling.command.TargetAggregateIdentifier
-
 
 data class CreateBookCommand(
     val isbn: String,
@@ -13,5 +10,5 @@ data class CreateBookCommand(
     val description: String?,
     val publicationYear: Int?,
     val price: Money,
-    val category:  BookCategory?
+    val category: BookCategory?
 )

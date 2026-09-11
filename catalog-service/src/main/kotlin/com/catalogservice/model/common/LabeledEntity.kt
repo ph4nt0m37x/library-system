@@ -1,7 +1,6 @@
 package com.catalogservice.model.common
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import java.time.ZonedDateTime
 
 
 interface LabeledEntity {
@@ -14,10 +13,4 @@ interface LabeledEntity {
 
     @JsonProperty("entityType")
     fun getEntityType(): String = this.javaClass.simpleName
-
-    @JsonProperty("dateCreated")
-    fun dateCreated(): ZonedDateTime? = null
-
-    @JsonProperty("archived")
-    fun isArchived(): Boolean = false
 }

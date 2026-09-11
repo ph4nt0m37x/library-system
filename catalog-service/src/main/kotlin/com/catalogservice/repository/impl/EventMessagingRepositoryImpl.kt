@@ -1,15 +1,16 @@
 package com.catalogservice.repository.impl
 
+import com.catalogservice.model.event.BookDeletedExternalEvent
 import com.catalogservice.repository.EventMessagingRepository
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Repository
 
 @Repository
 class KafkaMessagingRepositoryImpl(
-    private val kafkaTemplate: KafkaTemplate<String, String>
+    private val kafkaTemplate: KafkaTemplate<String, BookDeletedExternalEvent>
 ) : EventMessagingRepository {
 
-    override fun send(topic: String, key: String, payload: String) {
+    override fun send(topic: String, key: String, payload: BookDeletedExternalEvent) {
         kafkaTemplate.send(topic, key, payload)
             .whenComplete { result, ex ->
                 if (ex != null) {

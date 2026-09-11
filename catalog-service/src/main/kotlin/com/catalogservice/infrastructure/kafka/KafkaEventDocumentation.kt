@@ -1,6 +1,6 @@
 package com.catalogservice.infrastructure.kafka
 
-import com.catalogservice.model.event.BookDeletedEvent
+import com.catalogservice.model.event.BookDeletedExternalEvent
 import io.github.springwolf.bindings.kafka.annotations.KafkaAsyncOperationBinding
 import io.github.springwolf.core.asyncapi.annotations.AsyncOperation
 import io.github.springwolf.core.asyncapi.annotations.AsyncPublisher
@@ -11,13 +11,13 @@ class KafkaEventDocumentation {
 
     @AsyncPublisher(
         operation = AsyncOperation(
-            channelName = "catalog-events",
+            channelName = "book.deleted",
             description = "Published when a book is deleted.",
-            payloadType = BookDeletedEvent::class
+            payloadType = BookDeletedExternalEvent::class
         )
     )
     @KafkaAsyncOperationBinding
-    fun publishBookDeletedEvent(event: BookDeletedEvent) {
+    fun publishBookDeletedEvent(event: BookDeletedExternalEvent) {
         // Documentation only.
     }
 }

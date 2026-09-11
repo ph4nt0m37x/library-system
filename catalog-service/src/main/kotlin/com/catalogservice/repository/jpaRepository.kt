@@ -11,9 +11,22 @@ import org.springframework.stereotype.Repository
 interface BookRepository : JpaRepository<Book, BookId>
 
 @Repository
-interface BookCategoryRepository : JpaRepository<BookCategory, Long>
+interface BookCategoryRepository : JpaRepository<BookCategory, Long> {
+
+    fun existsByNameIgnoreCase(name: String): Boolean
+
+    fun existsByNameIgnoreCaseAndIdNot(name: String, id: Long): Boolean
+}
 
 interface BookViewRepository : JpaRepository<BookView, BookId> {
+
+    fun findAllByDeletedFalse(): List<BookView>
+
+    fun existsByIsbn(isbn: String): Boolean
+
+    fun existsByIsbnAndIdNot(isbn: String, id: BookId): Boolean
+
+    fun existsByCategory_Id(categoryId: Long): Boolean
 
     fun findByTitleContainingIgnoreCase(title: String): List<BookView>
 
