@@ -16,6 +16,8 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 
 interface LoanRepository : JpaRepository<Loan, String> {
+    fun findByIdempotencyKey(idempotencyKey: String): Loan?
+
     fun countByMemberIdAndStatus(memberId: String, status: LoanStatus): Long
 }
 

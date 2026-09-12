@@ -34,6 +34,7 @@ class LoanViewReadServiceImpl(
         extendedAt = extendedAt,
         returnedAt = returnedAt,
         status = status,
-        incidentDeclaredAt = incidentDeclaredAt
+        incidentDeclaredAt = incidentDeclaredAt,
+        idempotencyKey = idempotencyKey
     )
 }

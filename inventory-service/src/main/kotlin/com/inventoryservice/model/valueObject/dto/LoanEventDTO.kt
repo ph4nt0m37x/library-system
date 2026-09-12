@@ -10,6 +10,7 @@ interface LoanEventDTO {
     val occurredAt: Instant
     val bookId: String
     val libraryId: String
+    val idempotencyKey: String?
 
     fun validate() {
         require(eventId.isNotBlank()) { "eventId must not be blank" }
@@ -21,5 +22,9 @@ interface LoanEventDTO {
         require(eventVersion > 0) { "eventVersion must be greater than zero" }
         require(bookId.isNotBlank()) { "bookId must not be blank" }
         require(libraryId.isNotBlank()) { "libraryId must not be blank" }
+        idempotencyKey?.let {
+            require(it.isNotBlank()) { "idempotencyKey must not be blank" }
+            require(it.length <= 100) { "idempotencyKey must not exceed 100 characters" }
+        }
     }
 }

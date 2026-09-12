@@ -30,6 +30,7 @@ class LoanEventHandler(
                 loanId = event.loanId,
                 memberId = event.memberId,
                 bookId = event.bookId,
+                idempotencyKey = event.idempotencyKey,
                 borrowedAt = event.borrowedAt,
                 dueAt = event.dueAt,
                 status = LoanStatus.ACTIVE

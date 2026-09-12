@@ -6,5 +6,6 @@ import java.time.ZonedDateTime
 data class RecordPermanentBookDamageCommand(
     @TargetAggregateIdentifier
     val loanId: String,
-    val damageRecordedAt: ZonedDateTime
+    @Deprecated("Normal damage recording uses the server Clock")
+    val damageRecordedAt: ZonedDateTime? = null
 )

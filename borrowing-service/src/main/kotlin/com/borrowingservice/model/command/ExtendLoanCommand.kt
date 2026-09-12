@@ -6,5 +6,6 @@ import java.time.ZonedDateTime
 data class ExtendLoanCommand(
     @TargetAggregateIdentifier
     val loanId: String,
-    val extendedAt: ZonedDateTime
+    @Deprecated("Normal loan extension uses the server Clock")
+    val extendedAt: ZonedDateTime? = null
 )

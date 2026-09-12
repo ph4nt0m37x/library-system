@@ -6,16 +6,22 @@ import java.time.ZonedDateTime
 data class CreateLoanDTO(
     val memberId: String,
     val bookId: String,
-    val borrowedAt: ZonedDateTime
+    @Deprecated("Ignored; normal loan creation uses the server Clock")
+    val borrowedAt: ZonedDateTime? = null,
+    val idempotencyKey: String? = null
 )
 
-data class ExtendLoanDTO(val extendedAt: ZonedDateTime)
+@Deprecated("Ignored; normal loan extension uses the server Clock")
+data class ExtendLoanDTO(val extendedAt: ZonedDateTime? = null)
 
-data class ReturnLoanDTO(val returnedAt: ZonedDateTime)
+@Deprecated("Ignored; normal loan return uses the server Clock")
+data class ReturnLoanDTO(val returnedAt: ZonedDateTime? = null)
 
-data class DeclareBookLostDTO(val declaredLostAt: ZonedDateTime)
+@Deprecated("Ignored; normal lost-book declaration uses the server Clock")
+data class DeclareBookLostDTO(val declaredLostAt: ZonedDateTime? = null)
 
-data class RecordPermanentBookDamageDTO(val damageRecordedAt: ZonedDateTime)
+@Deprecated("Ignored; normal damage recording uses the server Clock")
+data class RecordPermanentBookDamageDTO(val damageRecordedAt: ZonedDateTime? = null)
 
 data class LoanResponse(
     val loanId: String,
@@ -26,5 +32,6 @@ data class LoanResponse(
     val extendedAt: ZonedDateTime?,
     val returnedAt: ZonedDateTime?,
     val status: LoanStatus,
-    val incidentDeclaredAt: ZonedDateTime?
+    val incidentDeclaredAt: ZonedDateTime?,
+    val idempotencyKey: String? = null
 )

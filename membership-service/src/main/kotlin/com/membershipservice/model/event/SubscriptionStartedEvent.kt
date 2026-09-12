@@ -3,6 +3,7 @@ package com.membershipservice.model.event
 import com.membershipservice.model.valueObject.MemberId
 import com.membershipservice.model.valueObject.SubscriptionId
 import com.membershipservice.model.valueObject.enums.Tier
+import com.membershipservice.model.valueObject.enums.SubscriptionPaymentStatus
 import java.math.BigDecimal
 import java.time.ZonedDateTime
 
@@ -15,5 +16,7 @@ data class SubscriptionStartedEvent(
     val createdAt: ZonedDateTime,
     val amountPaid: BigDecimal,
     val currency: String,
-    val paidAt: ZonedDateTime
+    val paidAt: ZonedDateTime,
+    val paymentReference: String? = null,
+    val paymentStatus: SubscriptionPaymentStatus? = null
 ) : MemberEvent(memberId)

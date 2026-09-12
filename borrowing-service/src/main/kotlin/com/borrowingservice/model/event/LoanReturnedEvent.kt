@@ -6,5 +6,6 @@ data class LoanReturnedEvent(
     val loanId: String,
     val memberId: String,
     val dueAt: ZonedDateTime,
-    val returnedAt: ZonedDateTime
+    val returnedAt: ZonedDateTime,
+    val idempotencyKey: String? = null
 )

@@ -12,7 +12,12 @@ RUN --mount=type=cache,target=/root/.m2 mvn -q -B -DskipTests package \
 
 FROM eclipse-temurin:17-jre
 WORKDIR /app
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
 COPY --from=build /workspace/app.jar app.jar
 
-EXPOSE 8089
+EXPOSE 8087
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=5 \
+    CMD curl --fail --silent --show-error --max-time 3 http://localhost:8087/actuator/health || exit 1
 ENTRYPOINT ["java","-jar","/app/app.jar"]

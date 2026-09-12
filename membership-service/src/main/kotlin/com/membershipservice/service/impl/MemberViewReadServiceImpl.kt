@@ -2,8 +2,10 @@ package com.membershipservice.service.impl
 
 import com.membershipservice.model.valueObject.MemberId
 import com.membershipservice.model.valueObject.MembershipNumber
+import com.membershipservice.model.valueObject.enums.SubscriptionPaymentStatus
 import com.membershipservice.model.valueObject.dto.MemberResponse
 import com.membershipservice.model.valueObject.dto.SubscriptionPeriodResponse
+import com.membershipservice.model.valueObject.dto.SubscriptionEligibilityResponse
 import com.membershipservice.model.view.MemberView
 import com.membershipservice.model.view.SubscriptionPeriodView
 import com.membershipservice.repository.MemberViewRepository
@@ -28,10 +30,28 @@ class MemberViewReadServiceImpl(
     override fun findAll(): List<MemberResponse> =
         memberViewRepository.findAll().map { it.toResponse() }
 
-    override fun hasActiveSubscription(memberId: MemberId): Boolean {
+    override fun hasActiveSubscription(memberId: MemberId): Boolean =
+        findSubscriptionEligibility(memberId)?.active ?: false
+
+    override fun findSubscriptionEligibility(memberId: MemberId): SubscriptionEligibilityResponse? {
+        if (!memberViewRepository.existsById(memberId)) {
+            return null
+        }
         val now = ZonedDateTime.now()
-        return subscriptionPeriodViewRepository
-            .existsByMemberIdAndStartsAtLessThanEqualAndEndsAtAfter(memberId, now, now)
+        val currentPeriod = subscriptionPeriodViewRepository
+            .findByMemberIdOrderByStartsAtAsc(memberId)
+            .filter {
+                it.paymentStatus == SubscriptionPaymentStatus.SETTLED &&
+                    !it.startsAt.isAfter(now) && it.endsAt.isAfter(now)
+            }
+            .maxByOrNull { it.startsAt }
+
+        return SubscriptionEligibilityResponse(
+            memberId = memberId.baseValue(),
+            exists = true,
+            active = currentPeriod != null,
+            currentPeriodEndsAt = currentPeriod?.endsAt
+        )
     }
 
     private fun MemberView.toResponse(): MemberResponse {
@@ -40,7 +60,10 @@ class MemberViewReadServiceImpl(
             .findByMemberIdOrderByStartsAtAsc(memberId)
             .map { it.toResponse() }
         val current = history
-            .filter { !it.startsAt.isAfter(now) && it.endsAt.isAfter(now) }
+            .filter {
+                it.paymentStatus == SubscriptionPaymentStatus.SETTLED &&
+                    !it.startsAt.isAfter(now) && it.endsAt.isAfter(now)
+            }
             .maxByOrNull { it.startsAt }
 
         return MemberResponse(
@@ -67,6 +90,8 @@ class MemberViewReadServiceImpl(
         createdAt = createdAt,
         amountPaid = amountPaid,
         currency = currency,
-        paidAt = paidAt
+        paidAt = paidAt,
+        paymentReference = paymentReference,
+        paymentStatus = paymentStatus
     )
 }

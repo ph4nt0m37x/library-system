@@ -12,5 +12,6 @@ data class RenewSubscriptionCommand(
     val tier: Tier,
     val amountPaid: BigDecimal,
     val currency: String,
-    val paidAt: ZonedDateTime
+    val paidAt: ZonedDateTime,
+    val paymentReference: String
 )

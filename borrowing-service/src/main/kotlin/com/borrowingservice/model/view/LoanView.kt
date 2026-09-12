@@ -32,6 +32,9 @@ class LoanView(
     @Column(name = "due_at", nullable = false)
     var dueAt: ZonedDateTime,
 
+    @Column(name = "idempotency_key", unique = true, length = 100, updatable = false)
+    var idempotencyKey: String? = null,
+
     @Column(name = "extended_at")
     var extendedAt: ZonedDateTime? = null,
 

@@ -8,5 +8,7 @@ data class CreateLoanCommand(
     val loanId: String,
     val memberId: String,
     val bookId: String,
-    val borrowedAt: ZonedDateTime
+    @Deprecated("Normal loan creation uses the server Clock")
+    val borrowedAt: ZonedDateTime? = null,
+    val idempotencyKey: String? = null
 )

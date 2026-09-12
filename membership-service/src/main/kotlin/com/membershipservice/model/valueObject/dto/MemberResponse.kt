@@ -1,6 +1,7 @@
 package com.membershipservice.model.valueObject.dto
 
 import com.membershipservice.model.valueObject.enums.Tier
+import com.membershipservice.model.valueObject.enums.SubscriptionPaymentStatus
 import java.math.BigDecimal
 import java.time.ZonedDateTime
 
@@ -27,5 +28,7 @@ data class SubscriptionPeriodResponse(
     val createdAt: ZonedDateTime,
     val amountPaid: BigDecimal,
     val currency: String,
-    val paidAt: ZonedDateTime
+    val paidAt: ZonedDateTime,
+    val paymentReference: String?,
+    val paymentStatus: SubscriptionPaymentStatus?
 )

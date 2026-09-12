@@ -22,8 +22,7 @@ class PaymentPolicyEventHandler(
                     feeId = allocation.feeId,
                     paymentId = event.paymentId,
                     allocationId = allocation.allocationId,
-                    amount = allocation.amount,
-                    settledAt = event.paidAt
+                    amount = allocation.amount
                 )
             )
         }

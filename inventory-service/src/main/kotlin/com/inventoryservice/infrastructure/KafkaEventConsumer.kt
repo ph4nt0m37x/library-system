@@ -59,8 +59,9 @@ class KafkaEventConsumer(
         val event = objectMapper.readValue(record.value(), eventClass)
         event.validate()
 
-        require(record.key() == event.loanId) {
-            "Kafka record key must equal loanId '${event.loanId}' for ordered loan processing"
+        val correlationKey = event.idempotencyKey ?: event.loanId
+        require(record.key() == correlationKey) {
+            "Kafka record key must equal correlation key '$correlationKey' for ordered loan processing"
         }
 
         loanEventInboxService.process(eventType, event) {

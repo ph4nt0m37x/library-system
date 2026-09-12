@@ -10,5 +10,6 @@ data class LoanMarkedLostEventDTO(
     override val eventVersion: Int,
     override val occurredAt: Instant,
     override val bookId: String,
-    override val libraryId: String
+    override val libraryId: String,
+    override val idempotencyKey: String? = null
 ) : LoanEventDTO

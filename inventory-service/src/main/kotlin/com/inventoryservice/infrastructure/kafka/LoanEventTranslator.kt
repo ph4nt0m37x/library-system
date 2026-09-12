@@ -22,7 +22,8 @@ class LoanEventTranslator {
             eventId = event.eventId,
             loanId = event.loanId,
             eventVersion = event.eventVersion,
-            occurredAt = event.occurredAt
+            occurredAt = event.occurredAt,
+            idempotencyKey = event.idempotencyKey
         )
 
     fun translate(event: LoanReturnedEventDTO): ReturnBookStockCommand =
@@ -33,7 +34,8 @@ class LoanEventTranslator {
             eventId = event.eventId,
             loanId = event.loanId,
             eventVersion = event.eventVersion,
-            occurredAt = event.occurredAt
+            occurredAt = event.occurredAt,
+            idempotencyKey = event.idempotencyKey
         )
 
     fun translate(event: LoanMarkedLostEventDTO): MarkBookStockLostCommand =
@@ -44,6 +46,7 @@ class LoanEventTranslator {
             eventId = event.eventId,
             loanId = event.loanId,
             eventVersion = event.eventVersion,
-            occurredAt = event.occurredAt
+            occurredAt = event.occurredAt,
+            idempotencyKey = event.idempotencyKey
         )
 }

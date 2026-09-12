@@ -11,6 +11,7 @@ import com.borrowingservice.model.valueObject.dto.ExtendLoanDTO
 import com.borrowingservice.model.valueObject.dto.LoanResponse
 import com.borrowingservice.model.valueObject.dto.RecordPermanentBookDamageDTO
 import com.borrowingservice.model.valueObject.dto.ReturnLoanDTO
+import com.borrowingservice.model.valueObject.ResourceNotFoundException
 import com.borrowingservice.service.LoanService
 import com.borrowingservice.service.LoanViewReadService
 import io.swagger.v3.oas.annotations.Operation
@@ -41,7 +42,7 @@ class LoanRestApi(
     fun findLoanById(@PathVariable id: String): ResponseEntity<LoanResponse> =
         loanViewReadService.findById(id)
             ?.let { ResponseEntity.ok(it) }
-            ?: ResponseEntity.notFound().build()
+            ?: throw ResourceNotFoundException("Loan", id)
 
     @Operation(summary = "Get all loans for a member")
     @GetMapping("/member/{memberId}")
@@ -62,7 +63,8 @@ class LoanRestApi(
                 loanId = loanId,
                 memberId = dto.memberId,
                 bookId = dto.bookId,
-                borrowedAt = dto.borrowedAt
+                borrowedAt = dto.borrowedAt,
+                idempotencyKey = dto.idempotencyKey
             )
         ).thenApply { id ->
             ResponseEntity.created(URI.create("/api/loans/$id")).body(CommandResponse(id))
@@ -73,35 +75,35 @@ class LoanRestApi(
     @PostMapping("/{id}/extend")
     fun extendLoan(
         @PathVariable id: String,
-        @RequestBody dto: ExtendLoanDTO
+        @RequestBody(required = false) dto: ExtendLoanDTO?
     ): CompletableFuture<ResponseEntity<CommandResponse>> =
-        loanService.extendLoan(ExtendLoanCommand(id, dto.extendedAt))
+        loanService.extendLoan(ExtendLoanCommand(id, dto?.extendedAt))
             .thenApply { ResponseEntity.ok(CommandResponse(it)) }
 
     @Operation(summary = "Return a loan")
     @PostMapping("/{id}/return")
     fun returnLoan(
         @PathVariable id: String,
-        @RequestBody dto: ReturnLoanDTO
+        @RequestBody(required = false) dto: ReturnLoanDTO?
     ): CompletableFuture<ResponseEntity<CommandResponse>> =
-        loanService.returnLoan(ReturnLoanCommand(id, dto.returnedAt))
+        loanService.returnLoan(ReturnLoanCommand(id, dto?.returnedAt))
             .thenApply { ResponseEntity.ok(CommandResponse(it)) }
 
     @Operation(summary = "Declare a loaned book lost")
     @PostMapping("/{id}/lost")
     fun declareBookLost(
         @PathVariable id: String,
-        @RequestBody dto: DeclareBookLostDTO
+        @RequestBody(required = false) dto: DeclareBookLostDTO?
     ): CompletableFuture<ResponseEntity<CommandResponse>> =
-        loanService.declareBookLost(DeclareBookLostCommand(id, dto.declaredLostAt))
+        loanService.declareBookLost(DeclareBookLostCommand(id, dto?.declaredLostAt))
             .thenApply { ResponseEntity.ok(CommandResponse(it)) }
 
     @Operation(summary = "Record permanent damage to a loaned book")
     @PostMapping("/{id}/damage")
     fun recordPermanentBookDamage(
         @PathVariable id: String,
-        @RequestBody dto: RecordPermanentBookDamageDTO
+        @RequestBody(required = false) dto: RecordPermanentBookDamageDTO?
     ): CompletableFuture<ResponseEntity<CommandResponse>> =
-        loanService.recordPermanentBookDamage(RecordPermanentBookDamageCommand(id, dto.damageRecordedAt))
+        loanService.recordPermanentBookDamage(RecordPermanentBookDamageCommand(id, dto?.damageRecordedAt))
             .thenApply { ResponseEntity.ok(CommandResponse(it)) }
 }

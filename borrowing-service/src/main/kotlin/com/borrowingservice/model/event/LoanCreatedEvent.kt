@@ -7,5 +7,6 @@ data class LoanCreatedEvent(
     val memberId: String,
     val bookId: String,
     val borrowedAt: ZonedDateTime,
-    val dueAt: ZonedDateTime
+    val dueAt: ZonedDateTime,
+    val idempotencyKey: String? = null
 )

@@ -6,8 +6,9 @@ import java.time.ZonedDateTime
 data class QuotePaymentDTO(
     val memberId: String,
     val currency: String,
-    val quotedAt: ZonedDateTime,
-    val feeIds: List<String>
+    @Deprecated("Ignored; payment quotes use the server Clock")
+    val quotedAt: ZonedDateTime? = null,
+    val feeIds: List<String> = emptyList()
 )
 
 data class RecordPaymentDTO(
@@ -15,8 +16,9 @@ data class RecordPaymentDTO(
     val memberId: String,
     val amount: BigDecimal,
     val currency: String,
-    val paidAt: ZonedDateTime,
-    val feeIds: List<String>
+    @Deprecated("Ignored; payment recording uses the server Clock")
+    val paidAt: ZonedDateTime? = null,
+    val feeIds: List<String> = emptyList()
 )
 
 data class FeeQuoteResponse(

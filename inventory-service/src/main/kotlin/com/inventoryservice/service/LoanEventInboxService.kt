@@ -24,6 +24,7 @@ class LoanEventInboxService(
         val reserved = processedLoanEventRepository.insertIfAbsent(
             eventId = event.eventId,
             loanId = event.loanId,
+            idempotencyKey = event.idempotencyKey,
             eventType = eventType,
             eventVersion = event.eventVersion,
             occurredAt = event.occurredAt

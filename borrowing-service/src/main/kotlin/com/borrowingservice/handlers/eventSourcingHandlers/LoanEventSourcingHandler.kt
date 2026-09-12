@@ -19,6 +19,9 @@ abstract class LoanEventSourcingHandler {
     abstract var bookId: String
         protected set
 
+    abstract var idempotencyKey: String?
+        protected set
+
     abstract var borrowedAt: ZonedDateTime
         protected set
 
@@ -42,6 +45,7 @@ abstract class LoanEventSourcingHandler {
         loanId = event.loanId
         memberId = event.memberId
         bookId = event.bookId
+        idempotencyKey = event.idempotencyKey
         borrowedAt = event.borrowedAt
         dueAt = event.dueAt
         status = LoanStatus.ACTIVE

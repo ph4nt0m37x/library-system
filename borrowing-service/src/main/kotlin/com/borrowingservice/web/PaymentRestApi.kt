@@ -6,6 +6,7 @@ import com.borrowingservice.model.valueObject.dto.PaymentQuoteResponse
 import com.borrowingservice.model.valueObject.dto.PaymentResponse
 import com.borrowingservice.model.valueObject.dto.QuotePaymentDTO
 import com.borrowingservice.model.valueObject.dto.RecordPaymentDTO
+import com.borrowingservice.model.valueObject.ResourceNotFoundException
 import com.borrowingservice.service.PaymentService
 import com.borrowingservice.service.PaymentViewReadService
 import io.swagger.v3.oas.annotations.Operation
@@ -36,7 +37,7 @@ class PaymentRestApi(
     fun findPaymentById(@PathVariable id: String): ResponseEntity<PaymentResponse> =
         paymentViewReadService.findById(id)
             ?.let { ResponseEntity.ok(it) }
-            ?: ResponseEntity.notFound().build()
+            ?: throw ResourceNotFoundException("Payment", id)
 
     @Operation(summary = "Get all payments for a member")
     @GetMapping("/member/{memberId}")
@@ -85,7 +86,12 @@ class PaymentRestApi(
                 paidAt = dto.paidAt,
                 feeIds = dto.feeIds
             )
-        ).thenApply { id ->
-            ResponseEntity.created(URI.create("/api/payments/$id")).body(CommandResponse(id))
+        ).thenApply { created ->
+            if (created) {
+                ResponseEntity.created(URI.create("/api/payments/${dto.paymentId}"))
+                    .body(CommandResponse(dto.paymentId))
+            } else {
+                ResponseEntity.ok(CommandResponse(dto.paymentId))
+            }
         }
 }
