@@ -19,8 +19,8 @@ import java.time.Instant
             columnNames = ["event_id"]
         ),
         UniqueConstraint(
-            name = "uk_inventory_event_inbox_idempotency",
-            columnNames = ["idempotency_key", "event_type"]
+            name = "uk_inventory_event_inbox_transition",
+            columnNames = ["loan_id", "event_type"]
         )
     ],
     indexes = [
@@ -49,6 +49,9 @@ class ProcessedLoanEvent(
 
     @Column(name = "event_version", nullable = false, updatable = false)
     var eventVersion: Int,
+
+    @Column(name = "aggregate_version", nullable = false, updatable = false)
+    var aggregateVersion: Long,
 
     @Column(name = "occurred_at", nullable = false, updatable = false)
     var occurredAt: Instant,

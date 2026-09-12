@@ -6,6 +6,7 @@ import com.inventoryservice.model.entity.BookStock
 import com.inventoryservice.model.exception.ResourceNotFoundException
 import com.inventoryservice.service.BookStockReadService
 import com.inventoryservice.service.LibraryService
+import com.inventoryservice.model.valueObject.dto.StockAvailabilityResponse
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -55,6 +56,13 @@ class LibraryStockRestApi(
 
         return ResponseEntity.ok(stock)
     }
+
+    @GetMapping("/{libraryId}/{bookId}/availability")
+    fun getAvailability(
+        @PathVariable libraryId: String,
+        @PathVariable bookId: String
+    ): ResponseEntity<StockAvailabilityResponse> =
+        ResponseEntity.ok(bookStockReadService.availability(libraryId, bookId))
 
     @GetMapping("/book/{bookId}")
     fun getBookStockAcrossLibraries(

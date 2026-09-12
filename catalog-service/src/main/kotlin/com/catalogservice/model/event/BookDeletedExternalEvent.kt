@@ -1,7 +1,11 @@
 package com.catalogservice.model.event
 
-import com.catalogservice.model.valueObject.BookId
+import java.time.Instant
 
 data class BookDeletedExternalEvent(
-    val bookId: BookId
+    val eventId: String,
+    val bookId: String,
+    val eventVersion: Int = 1,
+    val aggregateVersion: Long,
+    val occurredAt: Instant
 )

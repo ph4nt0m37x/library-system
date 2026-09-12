@@ -4,6 +4,7 @@ import com.inventoryservice.model.exception.InvalidStockQuantityException
 import com.inventoryservice.model.exception.DomainConflictException
 import com.inventoryservice.model.exception.DomainValidationException
 import com.inventoryservice.model.exception.ResourceNotFoundException
+import com.inventoryservice.model.exception.DependencyUnavailableException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
@@ -85,6 +86,14 @@ class InventoryCommandExceptionHandler {
             HttpStatus.CONFLICT,
             "CONSTRAINT_VIOLATION",
             "The requested data conflicts with an existing resource"
+        )
+
+    @ExceptionHandler(DependencyUnavailableException::class)
+    fun handleDependencyUnavailable(exception: DependencyUnavailableException): ResponseEntity<ProblemDetail> =
+        problem(
+            HttpStatus.SERVICE_UNAVAILABLE,
+            "${exception.dependency.uppercase()}_UNAVAILABLE",
+            exception.message
         )
 
     private fun findInvalidQuantityCause(exception: Throwable): InvalidStockQuantityException? {

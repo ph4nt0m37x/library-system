@@ -22,6 +22,8 @@ import com.inventoryservice.model.event.library.BookStockBorrowedEvent
 import com.inventoryservice.model.event.library.BookStockReturnedEvent
 import com.inventoryservice.model.command.library.MarkBookStockLostCommand
 import com.inventoryservice.model.event.library.BookStockMarkedLostEvent
+import com.inventoryservice.model.command.library.MarkBookStockDamagedCommand
+import com.inventoryservice.model.event.library.BookStockMarkedDamagedEvent
 import com.inventoryservice.model.exception.DomainConflictException
 import com.inventoryservice.model.exception.ResourceNotFoundException
 import jakarta.persistence.AttributeOverride
@@ -343,6 +345,24 @@ class Library() : LabeledEntity {
         existingStock?.let {
             it.applyChange(-event.quantity, 0)
         }
+    }
+
+    @CommandHandler
+    fun markStockDamaged(command: MarkBookStockDamagedCommand) {
+        BookStock.validateChangeQuantity(command.quantity)
+        val existingStock = stock.find { it.bookId == command.bookId }
+            ?: throw ResourceNotFoundException("Book is not in this library")
+
+        if (existingStock.borrowedQuantity < command.quantity) {
+            throw DomainConflictException("Not enough borrowed copies to mark as permanently damaged")
+        }
+        existingStock.validateChange(-command.quantity, 0)
+        AggregateLifecycle.apply(BookStockMarkedDamagedEvent(command))
+    }
+
+    @EventSourcingHandler
+    fun on(event: BookStockMarkedDamagedEvent) {
+        stock.find { it.bookId == event.bookId }?.applyChange(-event.quantity, 0)
     }
 
 

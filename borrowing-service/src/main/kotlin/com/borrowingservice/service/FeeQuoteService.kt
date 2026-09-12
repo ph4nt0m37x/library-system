@@ -1,6 +1,8 @@
 package com.borrowingservice.service
 
-import com.borrowingservice.client.InventoryBookPriceClient
+import com.borrowingservice.client.CatalogBookNotFoundException
+import com.borrowingservice.client.CatalogBookPriceClient
+import com.borrowingservice.client.CatalogServiceUnavailableException
 import com.borrowingservice.config.FeePolicyConfiguration
 import com.borrowingservice.model.aggregate.Fee
 import com.borrowingservice.model.valueObject.enums.BillableDayRule
@@ -41,7 +43,7 @@ data class PaymentQuote(
 class FeeQuoteService(
     private val feeRepository: FeeRepository,
     private val loanRepository: LoanRepository,
-    private val bookPriceClient: InventoryBookPriceClient,
+    private val bookPriceClient: CatalogBookPriceClient,
     private val policy: FeePolicyConfiguration,
     private val clock: Clock
 ) {
@@ -112,7 +114,16 @@ class FeeQuoteService(
     private fun replacementAmount(fee: Fee): BigDecimal {
         val loan = loanRepository.findById(fee.loanId)
             .orElseThrow { ResourceNotFoundException("Loan", fee.loanId) }
-        val price = bookPriceClient.findPrice(loan.bookId)
+        val price = try {
+            bookPriceClient.findPrice(loan.bookId)
+        } catch (exception: CatalogBookNotFoundException) {
+            throw exception
+        } catch (exception: CatalogServiceUnavailableException) {
+            throw exception
+        } catch (exception: Exception) {
+            causeOf<CatalogBookNotFoundException>(exception)?.let { throw it }
+            throw CatalogServiceUnavailableException(exception)
+        }
         val priceCurrency = price.currency.trim().uppercase()
         require(priceCurrency == fee.currency) {
             "Book ${loan.bookId} is priced in $priceCurrency, not ${fee.currency}"
@@ -143,6 +154,15 @@ class FeeQuoteService(
         UUID.nameUUIDFromBytes("payment:$paymentId:fee:$feeId".toByteArray(StandardCharsets.UTF_8)).toString()
 
     private fun BigDecimal.money(): BigDecimal = setScale(policy.moneyScale, policy.roundingMode)
+
+    private inline fun <reified T : Throwable> causeOf(exception: Throwable): T? {
+        var current: Throwable? = exception
+        while (current != null) {
+            if (current is T) return current
+            current = current.cause
+        }
+        return null
+    }
 
     private companion object {
         const val NANOS_PER_DAY = 86_400_000_000_000L

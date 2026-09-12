@@ -26,6 +26,9 @@ class LoanView(
     @Column(name = "book_id", nullable = false, updatable = false)
     var bookId: String,
 
+    @Column(name = "library_id", length = 100, updatable = false)
+    var libraryId: String? = null,
+
     @Column(name = "borrowed_at", nullable = false)
     var borrowedAt: ZonedDateTime,
 

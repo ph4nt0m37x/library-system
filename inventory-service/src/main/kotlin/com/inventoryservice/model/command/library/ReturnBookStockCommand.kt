@@ -17,6 +17,7 @@ data class ReturnBookStockCommand(
     val eventId: String? = null,
     val loanId: String? = null,
     val eventVersion: Int? = null,
+    val aggregateVersion: Long? = null,
     val occurredAt: Instant? = null,
     val idempotencyKey: String? = null
 )

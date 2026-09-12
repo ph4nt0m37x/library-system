@@ -30,6 +30,10 @@ class Loan : LoanEventSourcingHandler() {
     override lateinit var bookId: String
         protected set
 
+    @Column(name = "library_id", length = 100, updatable = false)
+    override var libraryId: String? = null
+        protected set
+
     @Column(name = "idempotency_key", unique = true, length = 100, updatable = false)
     override var idempotencyKey: String? = null
         protected set

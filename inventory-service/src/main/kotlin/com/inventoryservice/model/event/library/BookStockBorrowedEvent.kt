@@ -12,6 +12,7 @@ data class BookStockBorrowedEvent(
     val eventId: String? = null,
     val loanId: String? = null,
     val eventVersion: Int? = null,
+    val aggregateVersion: Long? = null,
     val occurredAt: Instant? = null,
     val idempotencyKey: String? = null
 ) : LibraryEvent(id) {
@@ -23,6 +24,7 @@ data class BookStockBorrowedEvent(
         eventId = command.eventId,
         loanId = command.loanId,
         eventVersion = command.eventVersion,
+        aggregateVersion = command.aggregateVersion,
         occurredAt = command.occurredAt,
         idempotencyKey = command.idempotencyKey
     )

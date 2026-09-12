@@ -1,15 +1,15 @@
 package com.inventoryservice.model.valueObject.dto
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import java.time.Instant
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 data class LoanMarkedLostEventDTO(
     override val eventId: String,
     override val loanId: String,
     override val eventVersion: Int,
+    override val aggregateVersion: Long,
     override val occurredAt: Instant,
     override val bookId: String,
     override val libraryId: String,
-    override val idempotencyKey: String? = null
+    override val idempotencyKey: String? = null,
+    val declaredLostAt: Instant
 ) : LoanEventDTO

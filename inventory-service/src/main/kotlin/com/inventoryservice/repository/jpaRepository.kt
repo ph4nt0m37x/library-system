@@ -3,6 +3,7 @@ package com.inventoryservice.repository
 import com.inventoryservice.model.aggregate.Library
 import com.inventoryservice.model.aggregate.Transfer
 import com.inventoryservice.model.entity.BookStock
+import com.inventoryservice.model.entity.CatalogBookReference
 import com.inventoryservice.model.valueObject.BookId
 import com.inventoryservice.model.valueObject.LibraryId
 import com.inventoryservice.model.valueObject.TransferId
@@ -44,3 +45,6 @@ interface LibraryViewReadRepository : JpaRepository<LibraryView, LibraryId> {
     fun findAllByDeletedFalse(): List<LibraryView>
 
 }
+
+@Repository
+interface CatalogBookReferenceRepository : JpaRepository<CatalogBookReference, String>

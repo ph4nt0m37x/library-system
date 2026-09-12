@@ -29,6 +29,7 @@ class LoanViewReadServiceImpl(
         loanId = loanId,
         memberId = memberId,
         bookId = bookId,
+        libraryId = libraryId,
         borrowedAt = borrowedAt,
         dueAt = dueAt,
         extendedAt = extendedAt,

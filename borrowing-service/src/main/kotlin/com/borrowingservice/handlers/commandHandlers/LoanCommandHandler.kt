@@ -3,6 +3,9 @@ package com.borrowingservice.handlers.commandHandlers
 import com.borrowingservice.client.MembershipClient
 import com.borrowingservice.client.MembershipMemberNotFoundException
 import com.borrowingservice.client.MembershipServiceUnavailableException
+import com.borrowingservice.client.InventoryAvailabilityClient
+import com.borrowingservice.client.InventoryResourceNotFoundException
+import com.borrowingservice.client.InventoryServiceUnavailableException
 import com.borrowingservice.config.LoanPolicyConfiguration
 import com.borrowingservice.model.aggregate.Loan
 import com.borrowingservice.model.command.CreateLoanCommand
@@ -40,6 +43,7 @@ class LoanCommandHandler(
     private val feeRepository: FeeRepository,
     private val banRecordRepository: BorrowingBanRecordRepository,
     private val membershipClient: MembershipClient,
+    private val inventoryAvailabilityClient: InventoryAvailabilityClient,
     private val policy: LoanPolicyConfiguration,
     private val clock: Clock
 ) {
@@ -47,9 +51,15 @@ class LoanCommandHandler(
     @Transactional
     fun handle(command: CreateLoanCommand): String {
         val idempotencyKey = normalizeIdempotencyKey(command.idempotencyKey)
+        val memberId = normalizeIdentifier(command.memberId, "memberId")
+        val bookId = normalizeIdentifier(command.bookId, "bookId")
+        val libraryId = normalizeIdentifier(command.libraryId, "libraryId")
 
         loanRepository.findByIdempotencyKey(idempotencyKey)?.let { existing ->
-            if (existing.memberId == command.memberId && existing.bookId == command.bookId) {
+            if (
+                existing.memberId == memberId && existing.bookId == bookId &&
+                existing.libraryId == libraryId
+            ) {
                 return existing.loanId
             }
             throw StateConflictException(
@@ -62,12 +72,14 @@ class LoanCommandHandler(
             throw StateConflictException("LOAN_ID_ALREADY_EXISTS", "Loan ${command.loanId} already exists")
         }
         val borrowedAt = now()
-        checkEligibility(command.memberId, borrowedAt)
+        checkEligibility(memberId, borrowedAt)
+        checkStockAvailability(libraryId, bookId)
 
         val event = LoanCreatedEvent(
             loanId = command.loanId,
-            memberId = command.memberId,
-            bookId = command.bookId,
+            memberId = memberId,
+            bookId = bookId,
+            libraryId = libraryId,
             borrowedAt = borrowedAt,
             dueAt = borrowedAt.plus(policy.regularLoanDuration),
             idempotencyKey = idempotencyKey
@@ -126,6 +138,8 @@ class LoanCommandHandler(
                 LoanReturnedEvent(
                     loanId = loan.loanId,
                     memberId = loan.memberId,
+                    bookId = loan.bookId,
+                    libraryId = requireLibraryId(loan),
                     dueAt = loan.dueAt,
                     returnedAt = returnedAt,
                     idempotencyKey = loan.idempotencyKey
@@ -148,7 +162,14 @@ class LoanCommandHandler(
                 "A Loan cannot be declared lost before it was borrowed"
             }
             AggregateLifecycle.apply(
-                LoanMarkedLostEvent(loan.loanId, loan.memberId, declaredLostAt, loan.idempotencyKey)
+                LoanMarkedLostEvent(
+                    loanId = loan.loanId,
+                    memberId = loan.memberId,
+                    bookId = loan.bookId,
+                    libraryId = requireLibraryId(loan),
+                    declaredLostAt = declaredLostAt,
+                    idempotencyKey = loan.idempotencyKey
+                )
             )
         }
         return command.loanId
@@ -167,7 +188,14 @@ class LoanCommandHandler(
                 "A Loan cannot be marked damaged before it was borrowed"
             }
             AggregateLifecycle.apply(
-                LoanMarkedDamagedEvent(loan.loanId, loan.memberId, damageRecordedAt, loan.idempotencyKey)
+                LoanMarkedDamagedEvent(
+                    loanId = loan.loanId,
+                    memberId = loan.memberId,
+                    bookId = loan.bookId,
+                    libraryId = requireLibraryId(loan),
+                    damageRecordedAt = damageRecordedAt,
+                    idempotencyKey = loan.idempotencyKey
+                )
             )
         }
         return command.loanId
@@ -181,11 +209,15 @@ class LoanCommandHandler(
         } catch (exception: MembershipServiceUnavailableException) {
             throw exception
         } catch (exception: Exception) {
+            causeOf<MembershipMemberNotFoundException>(exception)?.let { throw it }
             throw MembershipServiceUnavailableException(exception)
         }
 
         if (!membership.exists) {
             throw MembershipMemberNotFoundException()
+        }
+        if (membership.memberId != memberId) {
+            throw MembershipServiceUnavailableException()
         }
         rejectUnless(
             membership.active,
@@ -212,6 +244,35 @@ class LoanCommandHandler(
         }
     }
 
+    private fun checkStockAvailability(libraryId: String, bookId: String) {
+        val stock = try {
+            inventoryAvailabilityClient.availability(libraryId, bookId)
+        } catch (exception: InventoryResourceNotFoundException) {
+            throw exception
+        } catch (exception: InventoryServiceUnavailableException) {
+            throw exception
+        } catch (exception: Exception) {
+            causeOf<InventoryResourceNotFoundException>(exception)?.let { throw it }
+            throw InventoryServiceUnavailableException(exception)
+        }
+
+        if (stock.libraryId != libraryId || stock.bookId != bookId) {
+            throw InventoryServiceUnavailableException()
+        }
+        if (!stock.libraryActive) {
+            throw StateConflictException("LIBRARY_INACTIVE", "Library $libraryId is not active")
+        }
+        if (!stock.bookActive) {
+            throw ResourceNotFoundException("Book", bookId)
+        }
+        if (!stock.available || stock.availableQuantity <= 0) {
+            throw StateConflictException(
+                "COPY_UNAVAILABLE",
+                "No copy of book $bookId is available at library $libraryId"
+            )
+        }
+    }
+
     private fun requireLoan(loanId: String) {
         if (!loanRepository.existsById(loanId)) {
             throw ResourceNotFoundException("Loan", loanId)
@@ -225,5 +286,27 @@ class LoanCommandHandler(
         require(!normalized.isNullOrEmpty()) { "idempotencyKey must be provided" }
         require(normalized.length <= 100) { "idempotencyKey must not exceed 100 characters" }
         return normalized
+    }
+
+    private fun normalizeIdentifier(value: String, field: String): String {
+        val normalized = value.trim()
+        require(normalized.isNotEmpty()) { "$field must not be blank" }
+        require(normalized.length <= 100) { "$field must not exceed 100 characters" }
+        return normalized
+    }
+
+    private fun requireLibraryId(loan: Loan): String = loan.libraryId
+        ?: throw StateConflictException(
+            "LOAN_LIBRARY_UNKNOWN",
+            "Loan ${loan.loanId} predates library-aware circulation and cannot update stock"
+        )
+
+    private inline fun <reified T : Throwable> causeOf(exception: Throwable): T? {
+        var current: Throwable? = exception
+        while (current != null) {
+            if (current is T) return current
+            current = current.cause
+        }
+        return null
     }
 }

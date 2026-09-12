@@ -1,11 +1,11 @@
 package com.inventoryservice.service.impl
 
-import com.inventoryservice.client.CatalogBookClient
 import com.inventoryservice.model.command.library.AddBookStockCommand
 import com.inventoryservice.model.command.library.BorrowBookStockCommand
 import com.inventoryservice.model.command.library.CreateLibraryCommand
 import com.inventoryservice.model.command.library.DeleteLibraryCommand
 import com.inventoryservice.model.command.library.MarkBookStockLostCommand
+import com.inventoryservice.model.command.library.MarkBookStockDamagedCommand
 import com.inventoryservice.model.command.library.RemoveBookStockCommand
 import com.inventoryservice.model.command.library.ReturnBookStockCommand
 import com.inventoryservice.model.command.library.UpdateLibraryCommand
@@ -17,6 +17,7 @@ import com.inventoryservice.model.valueObject.LibraryId
 import com.inventoryservice.model.valueObject.LibraryName
 import com.inventoryservice.repository.LibraryRepository
 import com.inventoryservice.service.LibraryService
+import com.inventoryservice.service.CatalogBookPolicy
 import org.axonframework.commandhandling.gateway.CommandGateway
 import org.springframework.stereotype.Service
 import java.util.concurrent.CompletableFuture
@@ -24,7 +25,7 @@ import java.util.concurrent.CompletableFuture
 @Service
 class LibraryServiceImpl(
     private val commandGateway: CommandGateway,
-    private val catalogBookClient: CatalogBookClient,
+    private val catalogBookPolicy: CatalogBookPolicy,
     private val libraryRepository: LibraryRepository
 ) : LibraryService {
 
@@ -59,11 +60,7 @@ class LibraryServiceImpl(
         command: AddBookStockCommand
     ): CompletableFuture<Void> {
         validateLibrary(command.libraryId)
-        if (!catalogBookClient.isBookAvailable(command.bookId.value)) {
-            throw ResourceNotFoundException(
-                "Book '${command.bookId.baseValue()}' does not exist or is deleted in Catalog"
-            )
-        }
+        catalogBookPolicy.requireActive(command.bookId.baseValue())
         return sendWithoutResult(command)
     }
 
@@ -90,6 +87,13 @@ class LibraryServiceImpl(
 
     override fun markBookStockLost(
         command: MarkBookStockLostCommand
+    ): CompletableFuture<Void> {
+        validateLibrary(command.libraryId)
+        return sendWithoutResult(command)
+    }
+
+    override fun markBookStockDamaged(
+        command: MarkBookStockDamagedCommand
     ): CompletableFuture<Void> {
         validateLibrary(command.libraryId)
         return sendWithoutResult(command)

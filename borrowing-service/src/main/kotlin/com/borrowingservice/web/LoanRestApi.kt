@@ -63,6 +63,7 @@ class LoanRestApi(
                 loanId = loanId,
                 memberId = dto.memberId,
                 bookId = dto.bookId,
+                libraryId = dto.libraryId,
                 borrowedAt = dto.borrowedAt,
                 idempotencyKey = dto.idempotencyKey
             )

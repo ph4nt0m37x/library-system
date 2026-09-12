@@ -9,6 +9,8 @@ import com.inventoryservice.model.valueObject.BookId
 import com.inventoryservice.model.valueObject.dto.LoanCreatedEventDTO
 import com.inventoryservice.model.valueObject.dto.LoanMarkedLostEventDTO
 import com.inventoryservice.model.valueObject.dto.LoanReturnedEventDTO
+import com.inventoryservice.model.command.library.MarkBookStockDamagedCommand
+import com.inventoryservice.model.valueObject.dto.LoanMarkedDamagedEventDTO
 import org.springframework.stereotype.Component
 
 @Component
@@ -22,6 +24,7 @@ class LoanEventTranslator {
             eventId = event.eventId,
             loanId = event.loanId,
             eventVersion = event.eventVersion,
+            aggregateVersion = event.aggregateVersion,
             occurredAt = event.occurredAt,
             idempotencyKey = event.idempotencyKey
         )
@@ -34,6 +37,7 @@ class LoanEventTranslator {
             eventId = event.eventId,
             loanId = event.loanId,
             eventVersion = event.eventVersion,
+            aggregateVersion = event.aggregateVersion,
             occurredAt = event.occurredAt,
             idempotencyKey = event.idempotencyKey
         )
@@ -46,6 +50,20 @@ class LoanEventTranslator {
             eventId = event.eventId,
             loanId = event.loanId,
             eventVersion = event.eventVersion,
+            aggregateVersion = event.aggregateVersion,
+            occurredAt = event.occurredAt,
+            idempotencyKey = event.idempotencyKey
+        )
+
+    fun translate(event: LoanMarkedDamagedEventDTO): MarkBookStockDamagedCommand =
+        MarkBookStockDamagedCommand(
+            libraryId = LibraryId(event.libraryId),
+            bookId = BookId(event.bookId),
+            quantity = 1,
+            eventId = event.eventId,
+            loanId = event.loanId,
+            eventVersion = event.eventVersion,
+            aggregateVersion = event.aggregateVersion,
             occurredAt = event.occurredAt,
             idempotencyKey = event.idempotencyKey
         )

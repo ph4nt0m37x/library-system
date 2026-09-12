@@ -6,6 +6,7 @@ import java.time.ZonedDateTime
 data class CreateLoanDTO(
     val memberId: String,
     val bookId: String,
+    val libraryId: String,
     @Deprecated("Ignored; normal loan creation uses the server Clock")
     val borrowedAt: ZonedDateTime? = null,
     val idempotencyKey: String? = null
@@ -27,6 +28,7 @@ data class LoanResponse(
     val loanId: String,
     val memberId: String,
     val bookId: String,
+    val libraryId: String?,
     val borrowedAt: ZonedDateTime,
     val dueAt: ZonedDateTime,
     val extendedAt: ZonedDateTime?,

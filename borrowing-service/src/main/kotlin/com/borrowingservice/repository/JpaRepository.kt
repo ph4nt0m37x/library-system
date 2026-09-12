@@ -26,6 +26,8 @@ interface FeeRepository : JpaRepository<Fee, String> {
 
     fun countByMemberIdAndStatus(memberId: String, status: FeeStatus): Long
 
+    fun findFirstByMemberIdAndReasonOrderByCreatedAtDesc(memberId: String, reason: FeeReason): Fee?
+
     @Query(
         """
         select count(f)

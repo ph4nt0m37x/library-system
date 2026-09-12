@@ -2,6 +2,10 @@ package com.borrowingservice.web
 
 import com.borrowingservice.client.MembershipMemberNotFoundException
 import com.borrowingservice.client.MembershipServiceUnavailableException
+import com.borrowingservice.client.InventoryResourceNotFoundException
+import com.borrowingservice.client.InventoryServiceUnavailableException
+import com.borrowingservice.client.CatalogBookNotFoundException
+import com.borrowingservice.client.CatalogServiceUnavailableException
 import com.borrowingservice.model.valueObject.LoanEligibilityException
 import com.borrowingservice.model.valueObject.ResourceNotFoundException
 import com.borrowingservice.model.valueObject.StateConflictException
@@ -13,7 +17,6 @@ import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
-import org.springframework.web.bind.MissingServletRequestBodyException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
@@ -41,6 +44,22 @@ class RestExceptionHandler {
     fun membershipUnavailable(): ResponseEntity<ProblemDetail> =
         problem(HttpStatus.SERVICE_UNAVAILABLE, "MEMBERSHIP_UNAVAILABLE", "Membership service is unavailable")
 
+    @ExceptionHandler(InventoryResourceNotFoundException::class)
+    fun inventoryResourceNotFound(): ResponseEntity<ProblemDetail> =
+        problem(HttpStatus.NOT_FOUND, "INVENTORY_RESOURCE_NOT_FOUND", "Library or book was not found")
+
+    @ExceptionHandler(InventoryServiceUnavailableException::class)
+    fun inventoryUnavailable(): ResponseEntity<ProblemDetail> =
+        problem(HttpStatus.SERVICE_UNAVAILABLE, "INVENTORY_UNAVAILABLE", "Inventory service is unavailable")
+
+    @ExceptionHandler(CatalogBookNotFoundException::class)
+    fun catalogBookNotFound(): ResponseEntity<ProblemDetail> =
+        problem(HttpStatus.NOT_FOUND, "BOOK_NOT_FOUND", "Book was not found")
+
+    @ExceptionHandler(CatalogServiceUnavailableException::class)
+    fun catalogUnavailable(): ResponseEntity<ProblemDetail> =
+        problem(HttpStatus.SERVICE_UNAVAILABLE, "CATALOG_UNAVAILABLE", "Catalog service is unavailable")
+
     @ExceptionHandler(StateConflictException::class)
     fun stateConflict(exception: StateConflictException): ResponseEntity<ProblemDetail> =
         problem(HttpStatus.CONFLICT, exception.code, exception.message)
@@ -64,7 +83,6 @@ class RestExceptionHandler {
     @ExceptionHandler(
         HttpMessageNotReadableException::class,
         MethodArgumentNotValidException::class,
-        MissingServletRequestBodyException::class,
         MethodArgumentTypeMismatchException::class
     )
     fun malformedRequest(): ResponseEntity<ProblemDetail> =
@@ -89,6 +107,18 @@ class RestExceptionHandler {
         }
         if (causeOf<MembershipServiceUnavailableException>(exception) != null) {
             return membershipUnavailable()
+        }
+        if (causeOf<InventoryResourceNotFoundException>(exception) != null) {
+            return inventoryResourceNotFound()
+        }
+        if (causeOf<InventoryServiceUnavailableException>(exception) != null) {
+            return inventoryUnavailable()
+        }
+        if (causeOf<CatalogBookNotFoundException>(exception) != null) {
+            return catalogBookNotFound()
+        }
+        if (causeOf<CatalogServiceUnavailableException>(exception) != null) {
+            return catalogUnavailable()
         }
         causeOf<StateConflictException>(exception)?.let {
             return stateConflict(it)

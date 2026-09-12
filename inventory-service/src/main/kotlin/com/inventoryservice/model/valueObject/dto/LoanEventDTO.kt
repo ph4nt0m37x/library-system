@@ -7,6 +7,7 @@ interface LoanEventDTO {
     val eventId: String
     val loanId: String
     val eventVersion: Int
+    val aggregateVersion: Long
     val occurredAt: Instant
     val bookId: String
     val libraryId: String
@@ -19,9 +20,14 @@ interface LoanEventDTO {
         }
         require(loanId.isNotBlank()) { "loanId must not be blank" }
         require(loanId.length <= 100) { "loanId must not exceed 100 characters" }
-        require(eventVersion > 0) { "eventVersion must be greater than zero" }
-        require(bookId.isNotBlank()) { "bookId must not be blank" }
-        require(libraryId.isNotBlank()) { "libraryId must not be blank" }
+        require(eventVersion == 1) { "Unsupported loan event schema version: $eventVersion" }
+        require(aggregateVersion >= 0) { "aggregateVersion must not be negative" }
+        require(bookId.isNotBlank() && bookId.length <= 100) {
+            "bookId must contain 1 to 100 characters"
+        }
+        require(libraryId.isNotBlank() && libraryId.length <= 100) {
+            "libraryId must contain 1 to 100 characters"
+        }
         idempotencyKey?.let {
             require(it.isNotBlank()) { "idempotencyKey must not be blank" }
             require(it.length <= 100) { "idempotencyKey must not exceed 100 characters" }

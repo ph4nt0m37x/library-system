@@ -6,6 +6,7 @@ import com.inventoryservice.model.command.library.BorrowBookStockCommand
 import com.inventoryservice.model.command.library.CreateLibraryCommand
 import com.inventoryservice.model.command.library.DeleteLibraryCommand
 import com.inventoryservice.model.command.library.MarkBookStockLostCommand
+import com.inventoryservice.model.command.library.MarkBookStockDamagedCommand
 import com.inventoryservice.model.command.library.RemoveBookStockCommand
 import com.inventoryservice.model.command.library.ReturnBookStockCommand
 import com.inventoryservice.model.command.library.UpdateLibraryCommand
@@ -29,4 +30,6 @@ interface LibraryService {
     fun returnBookStock(command: ReturnBookStockCommand): CompletableFuture<Void>
 
     fun markBookStockLost(command: MarkBookStockLostCommand): CompletableFuture<Void>
+
+    fun markBookStockDamaged(command: MarkBookStockDamagedCommand): CompletableFuture<Void>
 }

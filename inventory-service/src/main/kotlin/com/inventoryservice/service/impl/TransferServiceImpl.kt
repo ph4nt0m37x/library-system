@@ -1,6 +1,5 @@
 package com.inventoryservice.service.impl
 
-import com.inventoryservice.client.CatalogBookClient
 import com.inventoryservice.model.aggregate.Transfer
 import com.inventoryservice.model.command.transfer.AcceptTransferCommand
 import com.inventoryservice.model.command.transfer.CancelTransferCommand
@@ -20,6 +19,7 @@ import com.inventoryservice.repository.BookStockRepository
 import com.inventoryservice.repository.LibraryRepository
 import com.inventoryservice.repository.TransferRepository
 import com.inventoryservice.service.TransferService
+import com.inventoryservice.service.CatalogBookPolicy
 import org.axonframework.commandhandling.gateway.CommandGateway
 import org.springframework.stereotype.Service
 import java.time.Clock
@@ -32,7 +32,7 @@ class TransferServiceImpl(
     private val libraryRepository: LibraryRepository,
     private val transferRepository: TransferRepository,
     private val bookStockRepository: BookStockRepository,
-    private val catalogBookClient: CatalogBookClient,
+    private val catalogBookPolicy: CatalogBookPolicy,
     private val clock: Clock
 ) : TransferService {
 
@@ -136,11 +136,7 @@ class TransferServiceImpl(
     }
 
     private fun validateBook(bookId: BookId) {
-        if (!catalogBookClient.isBookAvailable(bookId.value)) {
-            throw ResourceNotFoundException(
-                "Book '${bookId.baseValue()}' does not exist or is deleted in Catalog"
-            )
-        }
+        catalogBookPolicy.requireActive(bookId.baseValue())
     }
 
     private fun validateSourceStock(libraryId: LibraryId, bookId: BookId, quantity: Int) {
