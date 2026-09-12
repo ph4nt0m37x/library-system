@@ -1,17 +1,27 @@
 package com.inventoryservice.model.event.library
 
 import com.inventoryservice.model.command.library.MarkBookStockLostCommand
+import com.inventoryservice.model.valueObject.BookId
 import com.inventoryservice.model.valueObject.LibraryId
+import java.time.Instant
 
 data class BookStockMarkedLostEvent(
     override val id: LibraryId,
-    val bookId: String,
-    val quantity: Int
+    val bookId: BookId,
+    val quantity: Int,
+    val eventId: String? = null,
+    val loanId: String? = null,
+    val eventVersion: Int? = null,
+    val occurredAt: Instant? = null
 ) : LibraryEvent(id) {
 
     constructor(command: MarkBookStockLostCommand) : this(
         id = command.libraryId,
         bookId = command.bookId,
-        quantity = command.quantity
+        quantity = command.quantity,
+        eventId = command.eventId,
+        loanId = command.loanId,
+        eventVersion = command.eventVersion,
+        occurredAt = command.occurredAt
     )
 }

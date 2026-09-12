@@ -3,6 +3,8 @@ package com.inventoryservice.model.aggregate
 import com.inventoryservice.model.common.Identifier
 import com.inventoryservice.model.common.LabeledEntity
 import com.inventoryservice.model.valueObject.LibraryId
+import com.inventoryservice.model.valueObject.LibraryAddress
+import com.inventoryservice.model.valueObject.LibraryName
 import com.inventoryservice.model.entity.BookStock
 import com.inventoryservice.model.command.library.CreateLibraryCommand
 import com.inventoryservice.model.command.library.DeleteLibraryCommand
@@ -20,20 +22,32 @@ import com.inventoryservice.model.event.library.BookStockBorrowedEvent
 import com.inventoryservice.model.event.library.BookStockReturnedEvent
 import com.inventoryservice.model.command.library.MarkBookStockLostCommand
 import com.inventoryservice.model.event.library.BookStockMarkedLostEvent
+import com.inventoryservice.model.exception.DomainConflictException
+import com.inventoryservice.model.exception.ResourceNotFoundException
 import jakarta.persistence.AttributeOverride
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.EmbeddedId
 import jakarta.persistence.Entity
+import jakarta.persistence.JoinColumn
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
 import org.axonframework.commandhandling.CommandHandler
 import org.axonframework.eventsourcing.EventSourcingHandler
 import org.axonframework.modelling.command.AggregateIdentifier
 import org.axonframework.modelling.command.AggregateLifecycle
 import org.axonframework.spring.stereotype.Aggregate
 
-@Table(name = "library")
+@Table(
+    name = "library",
+    uniqueConstraints = [
+        UniqueConstraint(
+            name = "uk_library_name_address",
+            columnNames = ["name", "address"]
+        )
+    ]
+)
 @Aggregate(repository = "axonLibraryRepository")
 @Entity
 class Library() : LabeledEntity {
@@ -45,7 +59,10 @@ class Library() : LabeledEntity {
 
     // MUTABLE
 
+    @Column(name = "name", nullable = false, length = 200)
     private lateinit var name: String
+
+    @Column(name = "address", nullable = false, length = 500)
     private lateinit var address: String
 
     private var deleted: Boolean = false
@@ -53,6 +70,12 @@ class Library() : LabeledEntity {
     @OneToMany(
         cascade = [CascadeType.ALL],
         orphanRemoval = true
+    )
+    @JoinColumn(
+        name = "library_id",
+        referencedColumnName = "id",
+        insertable = false,
+        updatable = false
     )
     private val stock: MutableList<BookStock> = mutableListOf()
 
@@ -62,9 +85,15 @@ class Library() : LabeledEntity {
     @CommandHandler
     constructor(command: CreateLibraryCommand) : this() {
 
-        val event = LibraryCreatedEvent(command)
+        val name = LibraryName.of(command.name)
+        val address = LibraryAddress.of(command.address)
 
-        this.on(event)
+        val event = LibraryCreatedEvent(
+            id = LibraryId(),
+            name = name.value,
+            address = address.value
+        )
+
         AggregateLifecycle.apply(event)
     }
 
@@ -81,9 +110,15 @@ class Library() : LabeledEntity {
     @CommandHandler
     fun update(command: UpdateLibraryCommand) {
 
-        val event = LibraryUpdatedEvent(command)
+        val name = LibraryName.of(command.name)
+        val address = LibraryAddress.of(command.address)
 
-        this.on(event)
+        val event = LibraryUpdatedEvent(
+            id = command.id,
+            name = name.value,
+            address = address.value
+        )
+
         AggregateLifecycle.apply(event)
     }
 
@@ -101,7 +136,6 @@ class Library() : LabeledEntity {
 
         val event = LibraryDeletedEvent(command)
 
-        this.on(event)
         AggregateLifecycle.apply(event)
     }
 
@@ -117,13 +151,20 @@ class Library() : LabeledEntity {
     @CommandHandler
     fun increaseStock(command: AddBookStockCommand) {
 
-        require(command.quantity > 0) {
-            "Quantity must be greater than zero"
+        BookStock.validateChangeQuantity(command.quantity)
+
+        val existingStock = stock.find {
+            it.bookId == command.bookId
+        }
+
+        if (existingStock != null) {
+            existingStock.validateChange(command.quantity, command.quantity)
+        } else {
+            BookStock.validateState(command.quantity, command.quantity)
         }
 
         val event = BookStockIncreasedEvent(command)
 
-        this.on(event)
         AggregateLifecycle.apply(event)
     }
 
@@ -135,8 +176,7 @@ class Library() : LabeledEntity {
         }
 
         if (existingStock != null) {
-            existingStock.totalQuantity += event.quantity
-            existingStock.availableQuantity += event.quantity
+            existingStock.applyChange(event.quantity, event.quantity)
         } else {
             stock.add(
                 BookStock(
@@ -156,25 +196,24 @@ class Library() : LabeledEntity {
     @CommandHandler
     fun decreaseStock(command: RemoveBookStockCommand) {
 
-        require(command.quantity > 0) {
-            "Quantity must be greater than zero"
-        }
+        BookStock.validateChangeQuantity(command.quantity)
 
         val existingStock = stock.find {
             it.bookId == command.bookId
         }
 
-        require(existingStock != null) {
-            "Book is not in this library"
+        if (existingStock == null) {
+            throw ResourceNotFoundException("Book is not in this library")
         }
 
-        require(existingStock.availableQuantity >= command.quantity) {
-            "Not enough available copies"
+        if (existingStock.availableQuantity < command.quantity) {
+            throw DomainConflictException("Not enough available copies")
         }
+
+        existingStock.validateChange(-command.quantity, -command.quantity)
 
         val event = BookStockDecreasedEvent(command)
 
-        this.on(event)
         AggregateLifecycle.apply(event)
     }
 
@@ -186,8 +225,7 @@ class Library() : LabeledEntity {
         }
 
         existingStock?.let {
-            it.totalQuantity -= event.quantity
-            it.availableQuantity -= event.quantity
+            it.applyChange(-event.quantity, -event.quantity)
         }
     }
 
@@ -198,25 +236,24 @@ class Library() : LabeledEntity {
     @CommandHandler
     fun borrowStock(command: BorrowBookStockCommand) {
 
-        require(command.quantity > 0) {
-            "Quantity must be greater than zero"
-        }
+        BookStock.validateChangeQuantity(command.quantity)
 
         val existingStock = stock.find {
             it.bookId == command.bookId
         }
 
-        require(existingStock != null) {
-            "Book is not in this library"
+        if (existingStock == null) {
+            throw ResourceNotFoundException("Book is not in this library")
         }
 
-        require(existingStock.availableQuantity >= command.quantity) {
-            "Not enough available copies"
+        if (existingStock.availableQuantity < command.quantity) {
+            throw DomainConflictException("Not enough available copies")
         }
+
+        existingStock.validateChange(0, -command.quantity)
 
         val event = BookStockBorrowedEvent(command)
 
-        this.on(event)
         AggregateLifecycle.apply(event)
     }
 
@@ -228,7 +265,7 @@ class Library() : LabeledEntity {
         }
 
         existingStock?.let {
-            it.availableQuantity -= event.quantity
+            it.applyChange(0, -event.quantity)
         }
     }
 
@@ -239,25 +276,24 @@ class Library() : LabeledEntity {
     @CommandHandler
     fun returnStock(command: ReturnBookStockCommand) {
 
-        require(command.quantity > 0) {
-            "Quantity must be greater than zero"
-        }
+        BookStock.validateChangeQuantity(command.quantity)
 
         val existingStock = stock.find {
             it.bookId == command.bookId
         }
 
-        require(existingStock != null) {
-            "Book is not in this library"
+        if (existingStock == null) {
+            throw ResourceNotFoundException("Book is not in this library")
         }
 
-        require(existingStock.availableQuantity + command.quantity <= existingStock.totalQuantity) {
-            "Cannot return more copies than the total stock"
+        try {
+            existingStock.validateChange(0, command.quantity)
+        } catch (exception: IllegalArgumentException) {
+            throw DomainConflictException(exception.message ?: "The book cannot be returned")
         }
 
         val event = BookStockReturnedEvent(command)
 
-        this.on(event)
         AggregateLifecycle.apply(event)
     }
 
@@ -269,34 +305,31 @@ class Library() : LabeledEntity {
         }
 
         existingStock?.let {
-            it.availableQuantity += event.quantity
+            it.applyChange(0, event.quantity)
         }
     }
 
     @CommandHandler
     fun markStockLost(command: MarkBookStockLostCommand) {
 
-        require(command.quantity > 0) {
-            "Quantity must be greater than zero"
-        }
+        BookStock.validateChangeQuantity(command.quantity)
 
         val existingStock = stock.find {
             it.bookId == command.bookId
         }
 
-        require(existingStock != null) {
-            "Book is not in this library"
+        if (existingStock == null) {
+            throw ResourceNotFoundException("Book is not in this library")
         }
 
-        require(
-            existingStock.totalQuantity - existingStock.availableQuantity >= command.quantity
-        ) {
-            "Not enough borrowed copies to mark as lost"
+        if (existingStock.totalQuantity - existingStock.availableQuantity < command.quantity) {
+            throw DomainConflictException("Not enough borrowed copies to mark as lost")
         }
+
+        existingStock.validateChange(-command.quantity, 0)
 
         val event = BookStockMarkedLostEvent(command)
 
-        this.on(event)
         AggregateLifecycle.apply(event)
     }
 
@@ -308,7 +341,7 @@ class Library() : LabeledEntity {
         }
 
         existingStock?.let {
-            it.totalQuantity -= event.quantity
+            it.applyChange(-event.quantity, 0)
         }
     }
 

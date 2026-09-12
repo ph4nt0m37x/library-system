@@ -3,9 +3,10 @@ package com.inventoryservice.web
 import com.inventoryservice.model.command.library.AddBookStockCommand
 import com.inventoryservice.model.command.library.RemoveBookStockCommand
 import com.inventoryservice.model.entity.BookStock
-import com.inventoryservice.model.valueObject.LibraryId
+import com.inventoryservice.model.exception.ResourceNotFoundException
 import com.inventoryservice.service.BookStockReadService
 import com.inventoryservice.service.LibraryService
+import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
@@ -18,19 +19,19 @@ class LibraryStockRestApi(
 
     @PostMapping
     fun addBookStock(
-        @RequestBody command: AddBookStockCommand
-    ): ResponseEntity<LibraryId> =
-        ResponseEntity.ok(
-            libraryService.addBookStock(command).join()
-        )
+        @Valid @RequestBody command: AddBookStockCommand
+    ): ResponseEntity<Void> {
+        libraryService.addBookStock(command).join()
+        return ResponseEntity.noContent().build()
+    }
 
     @DeleteMapping
     fun removeBookStock(
-        @RequestBody command: RemoveBookStockCommand
-    ): ResponseEntity<LibraryId> =
-        ResponseEntity.ok(
-            libraryService.removeBookStock(command).join()
-        )
+        @Valid @RequestBody command: RemoveBookStockCommand
+    ): ResponseEntity<Void> {
+        libraryService.removeBookStock(command).join()
+        return ResponseEntity.noContent().build()
+    }
 
     @GetMapping("/{libraryId}")
     fun getLibraryStock(
@@ -48,7 +49,9 @@ class LibraryStockRestApi(
         val stock = bookStockReadService.findByLibraryAndBook(
             libraryId,
             bookId
-        ) ?: return ResponseEntity.notFound().build()
+        ) ?: throw ResourceNotFoundException(
+            "Book '$bookId' is not stocked in library '$libraryId'"
+        )
 
         return ResponseEntity.ok(stock)
     }

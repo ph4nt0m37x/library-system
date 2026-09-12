@@ -3,9 +3,12 @@ package com.inventoryservice.infrastructure
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.inventoryservice.infrastructure.kafka.LoanEventTranslator
 import com.inventoryservice.model.valueObject.dto.LoanCreatedEventDTO
+import com.inventoryservice.model.valueObject.dto.LoanEventDTO
 import com.inventoryservice.model.valueObject.dto.LoanMarkedLostEventDTO
 import com.inventoryservice.model.valueObject.dto.LoanReturnedEventDTO
+import com.inventoryservice.service.LoanEventInboxService
 import com.inventoryservice.service.LibraryService
+import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.stereotype.Component
 
@@ -13,55 +16,56 @@ import org.springframework.stereotype.Component
 class KafkaEventConsumer(
     private val objectMapper: ObjectMapper,
     private val loanEventTranslator: LoanEventTranslator,
-    private val libraryService: LibraryService
+    private val libraryService: LibraryService,
+    private val loanEventInboxService: LoanEventInboxService
 ) {
 
     @KafkaListener(
         topics = ["loan.created"],
-        groupId = "inventory-service"
+        groupId = "\${spring.kafka.consumer.group-id}"
     )
-    fun handleLoanCreated(message: String) {
-
-        val event = objectMapper.readValue(
-            message,
-            LoanCreatedEventDTO::class.java
-        )
-
-        val command = loanEventTranslator.translate(event)
-
-        libraryService.borrowBookStock(command).join()
+    fun handleLoanCreated(record: ConsumerRecord<String, String>) {
+        process(record, "loan.created", LoanCreatedEventDTO::class.java) { event ->
+            libraryService.borrowBookStock(loanEventTranslator.translate(event)).join()
+        }
     }
 
     @KafkaListener(
         topics = ["loan.returned"],
-        groupId = "inventory-service"
+        groupId = "\${spring.kafka.consumer.group-id}"
     )
-    fun handleLoanReturned(message: String) {
-
-        val event = objectMapper.readValue(
-            message,
-            LoanReturnedEventDTO::class.java
-        )
-
-        val command = loanEventTranslator.translate(event)
-
-        libraryService.returnBookStock(command).join()
+    fun handleLoanReturned(record: ConsumerRecord<String, String>) {
+        process(record, "loan.returned", LoanReturnedEventDTO::class.java) { event ->
+            libraryService.returnBookStock(loanEventTranslator.translate(event)).join()
+        }
     }
 
     @KafkaListener(
         topics = ["loan.marked.lost"],
-        groupId = "inventory-service"
+        groupId = "\${spring.kafka.consumer.group-id}"
     )
-    fun handleLoanMarkedLost(message: String) {
+    fun handleLoanMarkedLost(record: ConsumerRecord<String, String>) {
+        process(record, "loan.marked.lost", LoanMarkedLostEventDTO::class.java) { event ->
+            libraryService.markBookStockLost(loanEventTranslator.translate(event)).join()
+        }
+    }
 
-        val event = objectMapper.readValue(
-            message,
-            LoanMarkedLostEventDTO::class.java
-        )
+    private fun <T : LoanEventDTO> process(
+        record: ConsumerRecord<String, String>,
+        eventType: String,
+        eventClass: Class<T>,
+        action: (T) -> Unit
+    ) {
+        val event = objectMapper.readValue(record.value(), eventClass)
+        event.validate()
 
-        val command = loanEventTranslator.translate(event)
+        require(record.key() == event.loanId) {
+            "Kafka record key must equal loanId '${event.loanId}' for ordered loan processing"
+        }
 
-        libraryService.markBookStockLost(command).join()
+        loanEventInboxService.process(eventType, event) {
+            action(event)
+        }
     }
 
 }

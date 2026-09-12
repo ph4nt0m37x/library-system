@@ -1,6 +1,7 @@
 package com.inventoryservice.service.impl
 
 import com.inventoryservice.model.entity.BookStock
+import com.inventoryservice.model.valueObject.BookId
 import com.inventoryservice.repository.BookStockRepository
 import org.springframework.stereotype.Service
 import com.inventoryservice.service.BookStockReadService
@@ -20,11 +21,11 @@ class BookStockReadServiceImpl(
     ): BookStock? {
         return bookStockRepository.findByLibraryIdAndBookId(
             libraryId,
-            bookId
+            BookId(bookId)
         )
     }
 
     override fun findByBook(bookId: String): List<BookStock> {
-        return bookStockRepository.findByBookId(bookId)
+        return bookStockRepository.findByBookId(BookId(bookId))
     }
 }

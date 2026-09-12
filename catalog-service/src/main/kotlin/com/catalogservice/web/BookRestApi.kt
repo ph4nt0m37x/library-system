@@ -37,6 +37,11 @@ class BookRestApi(
     fun findAllAvailableBooks(): ResponseEntity<List<BookView>> =
         ResponseEntity.ok(bookViewReadService.findAllAvailable())
 
+    @Operation(summary = "Check book availability", description = "Check whether a book exists and is not deleted.")
+    @GetMapping("/{id}/available")
+    fun isBookAvailable(@PathVariable id: String): ResponseEntity<Boolean> =
+        ResponseEntity.ok(bookViewReadService.isAvailable(BookId(id)))
+
     @Operation(summary = "Get book by ID", description = "Get book by {id: String}.")
     @GetMapping("/{id}")
     fun findBookById(

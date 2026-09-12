@@ -22,6 +22,8 @@ interface BookViewRepository : JpaRepository<BookView, BookId> {
 
     fun findAllByDeletedFalse(): List<BookView>
 
+    fun existsByIdAndDeletedFalse(id: BookId): Boolean
+
     fun existsByIsbn(isbn: String): Boolean
 
     fun existsByIsbnAndIdNot(isbn: String, id: BookId): Boolean

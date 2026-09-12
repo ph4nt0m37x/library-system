@@ -24,6 +24,10 @@ class BookViewReadServiceImpl(
         return bookViewRepository.findAllByDeletedFalse()
     }
 
+    override fun isAvailable(id: BookId): Boolean {
+        return bookViewRepository.existsByIdAndDeletedFalse(id)
+    }
+
     override fun existsByIsbn(isbn: String): Boolean {
         return bookViewRepository.existsByIsbn(isbn)
     }
