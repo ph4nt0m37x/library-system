@@ -48,6 +48,10 @@ spring:
               uri: lb://borrowing-service
               predicates:
                 - Path=/api/loans/**,/api/fees/**,/api/payments/**,/api/borrowing-bans/**
+            - id: mcp-service
+              uri: lb://mcp-service
+              predicates:
+                - Path=/mcp,/mcp/**
           globalcors:
             add-to-simple-url-handler-mapping: true
             cors-configurations:

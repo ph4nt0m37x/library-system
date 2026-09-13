@@ -15,6 +15,7 @@ services:
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
       KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
       GATEWAY_SMOKE_CLIENT_SECRET: ${GATEWAY_SMOKE_CLIENT_SECRET:-gateway-smoke-secret}
+      MCP_SMOKE_CLIENT_SECRET: ${MCP_SMOKE_CLIENT_SECRET:-mcp-smoke-secret}
     volumes:
       - ./keycloak/import:/opt/keycloak/data/import:ro
       - keycloak_data:/opt/keycloak/data
