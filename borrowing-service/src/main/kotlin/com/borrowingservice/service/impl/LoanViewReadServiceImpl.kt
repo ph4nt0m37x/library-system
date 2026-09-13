@@ -29,11 +29,13 @@ class LoanViewReadServiceImpl(
         loanId = loanId,
         memberId = memberId,
         bookId = bookId,
+        libraryId = libraryId,
         borrowedAt = borrowedAt,
         dueAt = dueAt,
         extendedAt = extendedAt,
         returnedAt = returnedAt,
         status = status,
-        incidentDeclaredAt = incidentDeclaredAt
+        incidentDeclaredAt = incidentDeclaredAt,
+        idempotencyKey = idempotencyKey
     )
 }

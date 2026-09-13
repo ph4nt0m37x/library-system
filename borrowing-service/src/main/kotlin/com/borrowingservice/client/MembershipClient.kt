@@ -4,8 +4,10 @@ import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 
-@FeignClient(name = "membership-service")
+@FeignClient(name = "membership-service", configuration = [MembershipClientConfiguration::class])
 interface MembershipClient {
     @GetMapping("/api/members/{memberId}/subscription-status")
-    fun hasActiveSubscription(@PathVariable memberId: String): Boolean
+    fun subscriptionEligibility(@PathVariable memberId: String): MembershipEligibilityResponse
+
+    fun hasActiveSubscription(memberId: String): Boolean = subscriptionEligibility(memberId).active
 }

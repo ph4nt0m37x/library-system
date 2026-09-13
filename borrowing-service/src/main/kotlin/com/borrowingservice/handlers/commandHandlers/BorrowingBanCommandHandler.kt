@@ -4,6 +4,7 @@ import com.borrowingservice.model.aggregate.BorrowingBanRecord
 import com.borrowingservice.model.command.IssueBorrowingBanCommand
 import com.borrowingservice.model.event.BorrowingBanIssuedEvent
 import com.borrowingservice.model.valueObject.enums.BanTier
+import com.borrowingservice.model.valueObject.StateConflictException
 import com.borrowingservice.repository.BorrowingBanRecordRepository
 import org.axonframework.commandhandling.CommandHandler
 import org.axonframework.modelling.command.AggregateLifecycle
@@ -29,22 +30,30 @@ class BorrowingBanCommandHandler(
 
         val existing = banRecordRepository.findByMemberId(command.memberId)
         if (existing == null) {
-            require(command.tier == BanTier.TIER_1) { "The first issued ban must be TIER_1" }
+            if (command.tier != BanTier.TIER_1) {
+                throw StateConflictException("BAN_TIER_OUT_OF_ORDER", "The first issued ban must be TIER_1")
+            }
             applyNewRecord(command)
             return command.banId
         }
 
-        require(existing.banRecordId == command.banRecordId) {
-            "Member ${command.memberId} already uses ban record ${existing.banRecordId}"
+        if (existing.banRecordId != command.banRecordId) {
+            throw StateConflictException(
+                "BAN_RECORD_ALREADY_EXISTS",
+                "Member ${command.memberId} already uses ban record ${existing.banRecordId}"
+            )
         }
         existing.bans.firstOrNull { it.tier == command.tier }?.let { issued ->
-            require(issued.banId == command.banId && issued.triggeringFeeId == command.triggeringFeeId) {
-                "Ban tier ${command.tier} has already been issued"
+            if (issued.banId != command.banId || issued.triggeringFeeId != command.triggeringFeeId) {
+                throw StateConflictException("BAN_TIER_ALREADY_ISSUED", "Ban tier ${command.tier} has already been issued")
             }
             return issued.banId
         }
-        require(command.tier == nextTier(existing.lastIssuedTier)) {
-            "Ban tiers must progress in order after ${existing.lastIssuedTier}"
+        if (command.tier != nextTier(existing.lastIssuedTier)) {
+            throw StateConflictException(
+                "BAN_TIER_OUT_OF_ORDER",
+                "Ban tiers must progress in order after ${existing.lastIssuedTier}"
+            )
         }
 
         banAggregateRepository.load(existing.banRecordId).execute { record ->

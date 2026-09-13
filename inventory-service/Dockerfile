@@ -7,7 +7,7 @@ COPY pom.xml ./
 RUN --mount=type=cache,target=/root/.m2 mvn -q -B dependency:go-offline
 
 COPY src ./src
-RUN --mount=type=cache,target=/root/.m2 mvn -q -B -DskipTests package \
+RUN --mount=type=cache,target=/root/.m2 mvn -q -B -Dmaven.test.skip=true package \
     && cp target/*.jar /workspace/app.jar
 
 FROM eclipse-temurin:17-jre

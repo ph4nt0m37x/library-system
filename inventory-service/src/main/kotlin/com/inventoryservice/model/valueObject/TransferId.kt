@@ -13,7 +13,7 @@ open class TransferId(override val value: String) : Identifier<TransferId>(value
         if (this === other) return true
         if (other?.javaClass != javaClass) return false
 
-        return this.value == (other as LibraryId).value
+        return this.value == (other as TransferId).value
     }
 
     override fun hashCode(): Int {

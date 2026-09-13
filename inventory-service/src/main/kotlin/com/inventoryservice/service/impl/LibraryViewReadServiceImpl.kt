@@ -17,4 +17,7 @@ class LibraryViewReadServiceImpl(
     override fun findAll(): List<LibraryView> =
         libraryViewReadRepository.findAll()
 
+    override fun findAllAvailable(): List<LibraryView> =
+        libraryViewReadRepository.findAllByDeletedFalse()
+
 }

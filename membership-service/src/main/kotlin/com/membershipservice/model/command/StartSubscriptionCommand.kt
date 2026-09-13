@@ -13,5 +13,6 @@ data class StartSubscriptionCommand(
     val startsAt: ZonedDateTime,
     val amountPaid: BigDecimal,
     val currency: String,
-    val paidAt: ZonedDateTime
+    val paidAt: ZonedDateTime,
+    val paymentReference: String
 )

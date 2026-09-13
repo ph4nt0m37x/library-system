@@ -9,4 +9,6 @@ interface LibraryViewReadService {
 
     fun findAll(): List<LibraryView>
 
+    fun findAllAvailable(): List<LibraryView>
+
 }

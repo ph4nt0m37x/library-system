@@ -1,6 +1,7 @@
 package com.borrowingservice.web
 
 import com.borrowingservice.model.valueObject.dto.FeeResponse
+import com.borrowingservice.model.valueObject.ResourceNotFoundException
 import com.borrowingservice.service.FeeViewReadService
 import io.swagger.v3.oas.annotations.Operation
 import org.springframework.http.ResponseEntity
@@ -24,7 +25,7 @@ class FeeRestApi(
     fun findFeeById(@PathVariable id: String): ResponseEntity<FeeResponse> =
         feeViewReadService.findById(id)
             ?.let { ResponseEntity.ok(it) }
-            ?: ResponseEntity.notFound().build()
+            ?: throw ResourceNotFoundException("Fee", id)
 
     @Operation(summary = "Get all fees for a member")
     @GetMapping("/member/{memberId}")

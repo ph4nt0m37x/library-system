@@ -13,13 +13,13 @@ interface TransferService {
 
     fun requestTransfer(command: RequestTransferCommand): CompletableFuture<TransferId>
 
-    fun acceptTransfer(command: AcceptTransferCommand): CompletableFuture<TransferId>
+    fun acceptTransfer(command: AcceptTransferCommand): CompletableFuture<Void>
 
-    fun rejectTransfer(command: RejectTransferCommand): CompletableFuture<TransferId>
+    fun rejectTransfer(command: RejectTransferCommand): CompletableFuture<Void>
 
-    fun cancelTransfer(command: CancelTransferCommand): CompletableFuture<TransferId>
+    fun cancelTransfer(command: CancelTransferCommand): CompletableFuture<Void>
 
-    fun shipTransfer(command: ShipTransferCommand): CompletableFuture<TransferId>
+    fun shipTransfer(command: ShipTransferCommand): CompletableFuture<Void>
 
-    fun completeTransfer(command: CompleteTransferCommand): CompletableFuture<TransferId>
+    fun completeTransfer(command: CompleteTransferCommand): CompletableFuture<Void>
 }

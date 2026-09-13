@@ -10,8 +10,8 @@ interface PaymentService {
         memberId: String,
         feeIds: List<String>,
         currency: String,
-        quotedAt: ZonedDateTime
+        @Suppress("UNUSED_PARAMETER") quotedAt: ZonedDateTime? = null
     ): PaymentQuote
 
-    fun recordPayment(command: RecordPaymentCommand): CompletableFuture<String>
+    fun recordPayment(command: RecordPaymentCommand): CompletableFuture<Boolean>
 }

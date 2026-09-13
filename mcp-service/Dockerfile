@@ -1,0 +1,27 @@
+# syntax=docker/dockerfile:1.7
+
+FROM maven:3.9-eclipse-temurin-17 AS build
+WORKDIR /workspace
+
+COPY pom.xml ./
+RUN --mount=type=cache,target=/root/.m2 mvn -q -B dependency:go-offline
+
+COPY src ./src
+RUN --mount=type=cache,target=/root/.m2 mvn -q -B -DskipTests package \
+    && cp target/*.jar /workspace/app.jar
+
+FROM eclipse-temurin:17-jre
+WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=build /workspace/app.jar app.jar
+
+EXPOSE 8091
+
+HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=5 \
+    CMD curl --fail --silent --show-error --max-time 3 http://localhost:8091/actuator/health || exit 1
+
+ENTRYPOINT ["java", "-XX:+ExitOnOutOfMemoryError", "-XX:+UseContainerSupport", "-jar", "/app/app.jar"]

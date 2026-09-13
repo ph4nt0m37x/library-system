@@ -13,6 +13,7 @@ import com.membershipservice.model.valueObject.dto.MemberResponse
 import com.membershipservice.model.valueObject.dto.RegisterMemberDTO
 import com.membershipservice.model.valueObject.dto.RenewSubscriptionDTO
 import com.membershipservice.model.valueObject.dto.StartSubscriptionDTO
+import com.membershipservice.model.valueObject.dto.SubscriptionEligibilityResponse
 import com.membershipservice.model.valueObject.dto.UpdateMemberContactDetailsDTO
 import com.membershipservice.model.valueObject.dto.UpdateMemberNameDTO
 import com.membershipservice.service.MemberService
@@ -60,8 +61,12 @@ class MemberRestApi(
 
     @Operation(summary = "Check whether a member has an active subscription")
     @GetMapping("/{memberId}/subscription-status")
-    fun hasActiveSubscription(@PathVariable memberId: String): ResponseEntity<Boolean> =
-        ResponseEntity.ok(memberViewReadService.hasActiveSubscription(MemberId(memberId)))
+    fun subscriptionEligibility(
+        @PathVariable memberId: String
+    ): ResponseEntity<SubscriptionEligibilityResponse> =
+        memberViewReadService.findSubscriptionEligibility(MemberId(memberId))
+            ?.let { ResponseEntity.ok(it) }
+            ?: ResponseEntity.notFound().build()
 
     @Operation(summary = "Register a member")
     @PostMapping("/register")
@@ -111,7 +116,7 @@ class MemberRestApi(
         memberService.startSubscription(
             StartSubscriptionCommand(
                 MemberId(id), dto.tier, dto.startsAt,
-                dto.amountPaid, dto.currency, dto.paidAt
+                dto.amountPaid, dto.currency, dto.paidAt, dto.paymentReference
             )
         ).thenApply { ResponseEntity.ok(CommandResponse(it.baseValue())) }
 
@@ -124,7 +129,7 @@ class MemberRestApi(
         memberService.renewSubscription(
             RenewSubscriptionCommand(
                 MemberId(id), dto.tier,
-                dto.amountPaid, dto.currency, dto.paidAt
+                dto.amountPaid, dto.currency, dto.paidAt, dto.paymentReference
             )
         ).thenApply { ResponseEntity.ok(CommandResponse(it.baseValue())) }
 }

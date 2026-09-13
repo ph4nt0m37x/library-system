@@ -9,6 +9,7 @@ import com.catalogservice.model.entity.BookCategory
 import com.catalogservice.model.event.BookCreatedEvent
 import com.catalogservice.model.event.BookDeletedEvent
 import com.catalogservice.model.event.BookUpdatedEvent
+import com.catalogservice.model.exception.BookAlreadyDeletedException
 import com.catalogservice.model.valueObject.BookId
 import com.catalogservice.model.valueObject.Money
 import jakarta.persistence.AttributeOverride
@@ -69,7 +70,6 @@ class Book() : LabeledEntity {
             category = command.category
         )
 
-        this.on(event)
         AggregateLifecycle.apply(event)
     }
 
@@ -103,7 +103,6 @@ class Book() : LabeledEntity {
             category = command.category
         )
 
-        this.on(event)
         AggregateLifecycle.apply(event)
     }
 
@@ -123,12 +122,14 @@ class Book() : LabeledEntity {
 
     @CommandHandler
     fun delete(command: DeleteBookCommand) {
+        if (deleted) {
+            throw BookAlreadyDeletedException(id)
+        }
 
         val event = BookDeletedEvent(
             id = this.id
         )
 
-        this.on(event)
         AggregateLifecycle.apply(event)
     }
 

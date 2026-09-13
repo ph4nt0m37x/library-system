@@ -1,0 +1,64 @@
+{
+  "consumer": {
+    "name": "inventory-kafka-consumer"
+  },
+  "messages": [
+    {
+      "contents": {
+        "aggregateVersion": 2,
+        "bookId": "22222222-2222-2222-2222-222222222222",
+        "eventId": "66666666-6666-6666-6666-666666666666",
+        "eventVersion": 1,
+        "occurredAt": "2026-09-12T10:00:00Z"
+      },
+      "description": "a book.deleted integration event",
+      "matchingRules": {
+        "body": {
+          "$.aggregateVersion": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "integer"
+              }
+            ]
+          },
+          "$.eventId": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+              }
+            ]
+          },
+          "$.occurredAt": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+              }
+            ]
+          }
+        }
+      },
+      "metaData": {
+        "contentType": "application/json",
+        "key": "22222222-2222-2222-2222-222222222222",
+        "topic": "book.deleted"
+      }
+    }
+  ],
+  "metadata": {
+    "pact-jvm": {
+      "version": "4.7.0"
+    },
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  },
+  "provider": {
+    "name": "catalog-kafka-provider"
+  }
+}
+

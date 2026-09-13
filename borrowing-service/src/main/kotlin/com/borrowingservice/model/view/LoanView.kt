@@ -26,11 +26,17 @@ class LoanView(
     @Column(name = "book_id", nullable = false, updatable = false)
     var bookId: String,
 
+    @Column(name = "library_id", length = 100, updatable = false)
+    var libraryId: String? = null,
+
     @Column(name = "borrowed_at", nullable = false)
     var borrowedAt: ZonedDateTime,
 
     @Column(name = "due_at", nullable = false)
     var dueAt: ZonedDateTime,
+
+    @Column(name = "idempotency_key", unique = true, length = 100, updatable = false)
+    var idempotencyKey: String? = null,
 
     @Column(name = "extended_at")
     var extendedAt: ZonedDateTime? = null,

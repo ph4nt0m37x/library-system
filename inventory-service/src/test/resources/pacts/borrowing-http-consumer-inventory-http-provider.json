@@ -1,0 +1,259 @@
+{
+  "consumer": {
+    "name": "borrowing-http-consumer"
+  },
+  "interactions": [
+    {
+      "description": "a request for stock while Catalog is unavailable",
+      "providerStates": [
+        {
+          "name": "Catalog is unavailable while checking book 22222222-2222-2222-2222-222222222222"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/stock/33333333-3333-3333-3333-333333333333/22222222-2222-2222-2222-222222222222/availability"
+      },
+      "response": {
+        "body": {
+          "code": "CATALOG_UNAVAILABLE",
+          "detail": "Provider state detail",
+          "status": 503,
+          "title": "Service Unavailable"
+        },
+        "headers": {
+          "Content-Type": "application/problem+json"
+        },
+        "matchingRules": {
+          "body": {
+            "$.detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            }
+          }
+        },
+        "status": 503
+      }
+    },
+    {
+      "description": "a request for stock of an inactive book",
+      "providerStates": [
+        {
+          "name": "book 22222222-2222-2222-2222-222222222222 is inactive in Catalog"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/stock/33333333-3333-3333-3333-333333333333/22222222-2222-2222-2222-222222222222/availability"
+      },
+      "response": {
+        "body": {
+          "available": false,
+          "availableQuantity": 2,
+          "bookActive": false,
+          "bookId": "22222222-2222-2222-2222-222222222222",
+          "libraryActive": true,
+          "libraryId": "33333333-3333-3333-3333-333333333333"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "body": {
+            "$.availableQuantity": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a request for an available copy",
+      "providerStates": [
+        {
+          "name": "library 33333333-3333-3333-3333-333333333333 has an available copy of book 22222222-2222-2222-2222-222222222222"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/stock/33333333-3333-3333-3333-333333333333/22222222-2222-2222-2222-222222222222/availability"
+      },
+      "response": {
+        "body": {
+          "available": true,
+          "availableQuantity": 2,
+          "bookActive": true,
+          "bookId": "22222222-2222-2222-2222-222222222222",
+          "libraryActive": true,
+          "libraryId": "33333333-3333-3333-3333-333333333333"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "body": {
+            "$.availableQuantity": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a request for unavailable stock",
+      "providerStates": [
+        {
+          "name": "library 33333333-3333-3333-3333-333333333333 has no available copy of book 22222222-2222-2222-2222-222222222222"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/stock/33333333-3333-3333-3333-333333333333/22222222-2222-2222-2222-222222222222/availability"
+      },
+      "response": {
+        "body": {
+          "available": false,
+          "availableQuantity": 0,
+          "bookActive": true,
+          "bookId": "22222222-2222-2222-2222-222222222222",
+          "libraryActive": true,
+          "libraryId": "33333333-3333-3333-3333-333333333333"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "body": {
+            "$.availableQuantity": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a request for stock at an inactive library",
+      "providerStates": [
+        {
+          "name": "library 33333333-3333-3333-3333-333333333333 is inactive"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/stock/33333333-3333-3333-3333-333333333333/22222222-2222-2222-2222-222222222222/availability"
+      },
+      "response": {
+        "body": {
+          "available": false,
+          "availableQuantity": 2,
+          "bookActive": true,
+          "bookId": "22222222-2222-2222-2222-222222222222",
+          "libraryActive": false,
+          "libraryId": "33333333-3333-3333-3333-333333333333"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "body": {
+            "$.availableQuantity": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a request for stock at a missing library",
+      "providerStates": [
+        {
+          "name": "library 33333333-3333-3333-3333-333333333334 does not exist"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/stock/33333333-3333-3333-3333-333333333334/22222222-2222-2222-2222-222222222222/availability"
+      },
+      "response": {
+        "body": {
+          "code": "RESOURCE_NOT_FOUND",
+          "detail": "Provider state detail",
+          "status": 404,
+          "title": "Not Found"
+        },
+        "headers": {
+          "Content-Type": "application/problem+json"
+        },
+        "matchingRules": {
+          "body": {
+            "$.detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            }
+          }
+        },
+        "status": 404
+      }
+    }
+  ],
+  "metadata": {
+    "pact-jvm": {
+      "version": "4.7.0"
+    },
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  },
+  "provider": {
+    "name": "inventory-http-provider"
+  }
+}
+

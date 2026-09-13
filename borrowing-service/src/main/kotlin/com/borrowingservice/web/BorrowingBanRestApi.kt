@@ -1,6 +1,7 @@
 package com.borrowingservice.web
 
 import com.borrowingservice.model.valueObject.dto.BorrowingBanResponse
+import com.borrowingservice.model.valueObject.ResourceNotFoundException
 import com.borrowingservice.service.BorrowingBanViewReadService
 import io.swagger.v3.oas.annotations.Operation
 import org.springframework.http.ResponseEntity
@@ -24,12 +25,12 @@ class BorrowingBanRestApi(
     fun findBorrowingBanById(@PathVariable id: String): ResponseEntity<BorrowingBanResponse> =
         borrowingBanViewReadService.findById(id)
             ?.let { ResponseEntity.ok(it) }
-            ?: ResponseEntity.notFound().build()
+            ?: throw ResourceNotFoundException("Borrowing ban", id)
 
     @Operation(summary = "Get borrowing-ban record for a member")
     @GetMapping("/member/{memberId}")
     fun findBorrowingBanByMember(@PathVariable memberId: String): ResponseEntity<BorrowingBanResponse> =
         borrowingBanViewReadService.findByMemberId(memberId)
             ?.let { ResponseEntity.ok(it) }
-            ?: ResponseEntity.notFound().build()
+            ?: throw ResourceNotFoundException("Borrowing ban for member", memberId)
 }

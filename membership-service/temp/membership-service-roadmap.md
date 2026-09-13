@@ -234,14 +234,14 @@ Potential consumers in other services should depend only on external event contr
 
 Review the current operational files as part of implementation:
 
-- Change the local default server port in `application.properties` from `8088` to `8089` so it matches the Membership Docker configuration.
-- Keep the MySQL container port at `3306` internally and host mapping at `3307:3306`.
-- Verify the local datasource URL versus the Docker datasource URL.
+- Use the canonical Membership server port `8087` in `application.properties` and Docker configuration.
+- Keep the MySQL container port and host mapping at the values defined by the current Membership Compose file: `3307:3307`.
+- Use `jdbc:mysql://mysqldb:3307/membership_service_db` for the Docker datasource URL and verify the local datasource URL separately.
 - Use environment variables for database credentials and Kafka bootstrap servers.
 - Confirm the Membership Kafka consumer group and Springwolf base package.
-- Verify Consul registration on port `8089` and the actuator health endpoint.
+- Verify Consul registration on port `8087` and the actuator health endpoint.
 - Confirm that the external `shared_net` network is created by the root Compose stack.
-- Add an application health check to Compose if service-level startup ordering requires it.
+- The Membership Dockerfile exposes an actuator health check on port `8087`. Start the shared infrastructure before Membership so Consul is ready when registration begins; the existing Compose file still gates the application on MySQL health.
 
 ## Phase 12: Validation and tests
 
@@ -285,5 +285,5 @@ The Membership Service is complete when:
 - Required queries return stable response contracts.
 - REST endpoints have validation, status codes, error handling, and OpenAPI documentation.
 - Required external events are documented and reliably published, if Kafka publication is in scope.
-- The service starts locally and in Docker on port `8089`, connects to MySQL/Kafka/Consul, and reports healthy.
+- The service starts locally and in Docker on port `8087`, connects to MySQL/Kafka/Consul, and reports healthy.
 - Automated tests cover the main success paths and domain failures.

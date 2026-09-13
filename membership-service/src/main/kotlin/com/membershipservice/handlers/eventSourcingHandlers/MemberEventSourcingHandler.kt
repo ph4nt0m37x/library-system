@@ -71,10 +71,12 @@ abstract class MemberEventSourcingHandler {
     }
 
     private fun SubscriptionStartedEvent.toSubscriptionPeriod() = SubscriptionPeriod(
-        subscriptionId, memberId, tier, startsAt, endsAt, createdAt, amountPaid, currency, paidAt
+        subscriptionId, memberId, tier, startsAt, endsAt, createdAt, amountPaid, currency, paidAt,
+        paymentReference, paymentStatus
     )
 
     private fun SubscriptionRenewedEvent.toSubscriptionPeriod() = SubscriptionPeriod(
-        subscriptionId, memberId, tier, startsAt, endsAt, createdAt, amountPaid, currency, paidAt
+        subscriptionId, memberId, tier, startsAt, endsAt, createdAt, amountPaid, currency, paidAt,
+        paymentReference, paymentStatus
     )
 }

@@ -6,11 +6,16 @@ import com.catalogservice.model.view.BookView
 import com.catalogservice.repository.BookViewRepository
 import com.catalogservice.service.BookViewReadService
 import org.springframework.stereotype.Service
+import org.springframework.beans.factory.annotation.Value
 
 @Service
 class BookViewReadServiceImpl(
-    val bookViewRepository: BookViewRepository
+    val bookViewRepository: BookViewRepository,
+    @Value("\${catalog.pricing.currency:USD}") currency: String
 ) : BookViewReadService {
+    private val currency = currency.trim().uppercase().also {
+        require(it.matches(Regex("^[A-Z]{3}$"))) { "Catalog pricing currency must be a three-letter code" }
+    }
 
     override fun findById(id: BookId): BookView? {
         return bookViewRepository.findById(id).orElse(null)
@@ -19,6 +24,23 @@ class BookViewReadServiceImpl(
     override fun findAll(): List<BookView> {
         return bookViewRepository.findAll()
     }
+
+    override fun findAllAvailable(): List<BookView> {
+        return bookViewRepository.findAllByDeletedFalse()
+    }
+
+    override fun isAvailable(id: BookId): Boolean {
+        return bookViewRepository.existsByIdAndDeletedFalse(id)
+    }
+
+    override fun existsByIsbn(isbn: String): Boolean {
+        return bookViewRepository.existsByIsbn(isbn)
+    }
+
+    override fun existsByIsbnAndIdNot(isbn: String, id: BookId): Boolean {
+        return bookViewRepository.existsByIsbnAndIdNot(isbn, id)
+    }
+
     override fun searchByTitle(title: String): List<BookView> {
         return bookViewRepository.findByTitleContainingIgnoreCase(title)
     }
@@ -31,15 +53,11 @@ class BookViewReadServiceImpl(
         return bookViewRepository.findByCategory_Id(categoryId)
     }
 
-    override fun getBookPrice(bookId: String): BookPriceResponseDTO {
-        val book = bookViewRepository.findById(BookId(bookId))
-            .orElseThrow {
-                RuntimeException("Book not found")
-            }
-
-        return BookPriceResponseDTO(
-            price = book.price.amount
-        )
+    override fun getBookPrice(bookId: String): BookPriceResponseDTO? {
+        return bookViewRepository.findById(BookId(bookId))
+            .filter { !it.deleted }
+            .map { BookPriceResponseDTO(amount = it.price.amount, currency = currency) }
+            .orElse(null)
     }
 }
 

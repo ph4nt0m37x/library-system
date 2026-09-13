@@ -3,6 +3,8 @@ package com.inventoryservice.web
 import com.inventoryservice.model.command.library.CreateLibraryCommand
 import com.inventoryservice.model.command.library.DeleteLibraryCommand
 import com.inventoryservice.model.command.library.UpdateLibraryCommand
+import com.inventoryservice.model.dto.LibraryCreatedResponse
+import com.inventoryservice.model.exception.ResourceNotFoundException
 import com.inventoryservice.model.valueObject.LibraryId
 import com.inventoryservice.model.valueObject.dto.CreateLibraryDTO
 import com.inventoryservice.model.valueObject.dto.DeleteLibraryDTO
@@ -11,6 +13,8 @@ import com.inventoryservice.model.view.LibraryView
 import com.inventoryservice.service.LibraryService
 import com.inventoryservice.service.LibraryViewReadService
 import io.swagger.v3.oas.annotations.Operation
+import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
@@ -32,6 +36,16 @@ class LibraryRestApi(
         )
 
     @Operation(
+        summary = "Get all available libraries",
+        description = "Get all libraries that have not been deleted."
+    )
+    @GetMapping("/available")
+    fun findAllAvailableLibraries(): ResponseEntity<List<LibraryView>> =
+        ResponseEntity.ok(
+            libraryViewReadService.findAllAvailable()
+        )
+
+    @Operation(
         summary = "Get library by ID",
         description = "Get library by {id: String}."
     )
@@ -44,11 +58,9 @@ class LibraryRestApi(
             LibraryId(id)
         )
 
-        return if (library != null) {
-            ResponseEntity.ok(library)
-        } else {
-            ResponseEntity.notFound().build()
-        }
+        return ResponseEntity.ok(
+            library ?: throw ResourceNotFoundException("Library '$id' does not exist")
+        )
     }
 
     @Operation(
@@ -57,15 +69,15 @@ class LibraryRestApi(
     )
     @PostMapping("/create")
     fun createLibrary(
-        @RequestBody commandDto: CreateLibraryDTO
-    ): ResponseEntity<Any> =
-        ResponseEntity.ok(
+        @Valid @RequestBody commandDto: CreateLibraryDTO
+    ): ResponseEntity<LibraryCreatedResponse> =
+        ResponseEntity.status(HttpStatus.CREATED).body(
             libraryService.createLibrary(
                 CreateLibraryCommand(
                     name = commandDto.name,
                     address = commandDto.address
                 )
-            )
+            ).join()
         )
 
     @Operation(
@@ -74,17 +86,17 @@ class LibraryRestApi(
     )
     @PutMapping("/update")
     fun updateLibrary(
-        @RequestBody commandDto: UpdateLibraryDTO
-    ): ResponseEntity<Any> =
-        ResponseEntity.ok(
-            libraryService.updateLibrary(
-                UpdateLibraryCommand(
-                    id = LibraryId(commandDto.id),
-                    name = commandDto.name,
-                    address = commandDto.address
-                )
+        @Valid @RequestBody commandDto: UpdateLibraryDTO
+    ): ResponseEntity<Void> {
+        libraryService.updateLibrary(
+            UpdateLibraryCommand(
+                id = LibraryId(commandDto.id),
+                name = commandDto.name,
+                address = commandDto.address
             )
-        )
+        ).join()
+        return ResponseEntity.noContent().build()
+    }
 
     @Operation(
         summary = "Delete library",
@@ -92,13 +104,13 @@ class LibraryRestApi(
     )
     @DeleteMapping("/delete")
     fun deleteLibrary(
-        @RequestBody commandDto: DeleteLibraryDTO
-    ): ResponseEntity<Any> =
-        ResponseEntity.ok(
-            libraryService.deleteLibrary(
-                DeleteLibraryCommand(
-                    id = LibraryId(commandDto.id)
-                )
+        @Valid @RequestBody commandDto: DeleteLibraryDTO
+    ): ResponseEntity<Void> {
+        libraryService.deleteLibrary(
+            DeleteLibraryCommand(
+                id = LibraryId(commandDto.id)
             )
-        )
+        ).join()
+        return ResponseEntity.noContent().build()
+    }
 }

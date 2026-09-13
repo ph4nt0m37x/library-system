@@ -1,6 +1,7 @@
 package com.membershipservice.model.entity
 
 import com.membershipservice.model.valueObject.enums.Tier
+import com.membershipservice.model.valueObject.enums.SubscriptionPaymentStatus
 import com.membershipservice.model.valueObject.MemberId
 import com.membershipservice.model.valueObject.SubscriptionId
 import jakarta.persistence.AttributeOverride
@@ -54,5 +55,12 @@ class SubscriptionPeriod(
     var currency: String,
 
     @Column(name = "paid_at", nullable = false)
-    var paidAt: ZonedDateTime
+    var paidAt: ZonedDateTime,
+
+    @Column(name = "payment_reference", unique = true, length = 100)
+    var paymentReference: String?,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status", length = 32)
+    var paymentStatus: SubscriptionPaymentStatus?
 )

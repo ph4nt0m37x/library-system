@@ -60,3 +60,4 @@ docker/**/*.log
 *.swo
 *.tmp
 *.temp
+*.md

@@ -11,10 +11,7 @@ data class BookDeletedEvent(
         id = command.id
     )
 
-        override fun toExternalEvent(): BookDeletedExternalEvent {
-        return BookDeletedExternalEvent(
-            bookId = this.id,
-        )
-    }
+    // External metadata is constructed by the subscribing outbox handler from
+    // the committed Axon message, not from this internal domain event.
 }
 

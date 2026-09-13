@@ -19,8 +19,8 @@ class PaymentServiceImpl(
         memberId: String,
         feeIds: List<String>,
         currency: String,
-        quotedAt: ZonedDateTime
-    ): PaymentQuote = feeQuoteService.quote(paymentId, memberId, feeIds, currency, quotedAt)
+        @Suppress("UNUSED_PARAMETER") quotedAt: ZonedDateTime?
+    ): PaymentQuote = feeQuoteService.quote(paymentId, memberId, feeIds, currency)
 
-    override fun recordPayment(command: RecordPaymentCommand): CompletableFuture<String> = commandGateway.send(command)
+    override fun recordPayment(command: RecordPaymentCommand): CompletableFuture<Boolean> = commandGateway.send(command)
 }

@@ -3,6 +3,7 @@ package com.membershipservice.model.view
 import com.membershipservice.model.valueObject.MemberId
 import com.membershipservice.model.valueObject.SubscriptionId
 import com.membershipservice.model.valueObject.enums.Tier
+import com.membershipservice.model.valueObject.enums.SubscriptionPaymentStatus
 import jakarta.persistence.AttributeOverride
 import jakarta.persistence.Column
 import jakarta.persistence.Embedded
@@ -53,5 +54,12 @@ class SubscriptionPeriodView(
     var currency: String,
 
     @Column(name = "paid_at", nullable = false)
-    var paidAt: ZonedDateTime
+    var paidAt: ZonedDateTime,
+
+    @Column(name = "payment_reference", unique = true, length = 100)
+    var paymentReference: String?,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status", length = 32)
+    var paymentStatus: SubscriptionPaymentStatus?
 )

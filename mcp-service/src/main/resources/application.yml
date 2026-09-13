@@ -1,0 +1,66 @@
+server:
+  port: ${SERVER_PORT:8091}
+
+spring:
+  application:
+    name: mcp-service
+  ai:
+    mcp:
+      server:
+        name: library-system
+        version: 1.0.0
+        instructions: >-
+          Use catalog and inventory tools before claiming a book is available.
+          Administrative member, loan, fee, and payment capabilities require library-admin.
+          Ask for explicit confirmation before state-changing tools, preserve idempotency keys,
+          and remember that inventory projections update asynchronously after loan transitions.
+        protocol: STREAMABLE
+        type: SYNC
+        annotation-scanner:
+          enabled: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/library-system}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8180/realms/library-system/protocol/openid-connect/certs}
+  cloud:
+    consul:
+      host: ${SPRING_CLOUD_CONSUL_HOST:localhost}
+      port: ${SPRING_CLOUD_CONSUL_PORT:8500}
+      config:
+        enabled: false
+      discovery:
+        service-name: ${spring.application.name}
+        instance-id: ${spring.application.name}-${random.uuid}
+        prefer-ip-address: true
+        health-check-path: /actuator/health
+        health-check-interval: 15s
+        health-check-critical-timeout: 1m
+        register-health-check: true
+        port: ${server.port}
+    openfeign:
+      client:
+        config:
+          default:
+            connect-timeout: ${DOWNSTREAM_CONNECT_TIMEOUT_MS:2000}
+            read-timeout: ${DOWNSTREAM_READ_TIMEOUT_MS:5000}
+            logger-level: basic
+
+security:
+  jwt:
+    audience: ${KEYCLOAK_AUDIENCE:library-api}
+
+mcp:
+  allowed-origins: ${MCP_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:6274}
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when-authorized
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

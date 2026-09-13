@@ -1,11 +1,15 @@
 package com.borrowingservice.service
 
-import com.borrowingservice.client.InventoryBookPriceClient
+import com.borrowingservice.client.CatalogBookNotFoundException
+import com.borrowingservice.client.CatalogBookPriceClient
+import com.borrowingservice.client.CatalogServiceUnavailableException
 import com.borrowingservice.config.FeePolicyConfiguration
 import com.borrowingservice.model.aggregate.Fee
 import com.borrowingservice.model.valueObject.enums.BillableDayRule
 import com.borrowingservice.model.valueObject.enums.FeeReason
 import com.borrowingservice.model.valueObject.enums.FeeStatus
+import com.borrowingservice.model.valueObject.ResourceNotFoundException
+import com.borrowingservice.model.valueObject.StateConflictException
 import com.borrowingservice.repository.FeeRepository
 import com.borrowingservice.repository.LoanRepository
 import org.springframework.stereotype.Service
@@ -14,6 +18,7 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.nio.charset.StandardCharsets
 import java.time.Duration
+import java.time.Clock
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
@@ -38,9 +43,17 @@ data class PaymentQuote(
 class FeeQuoteService(
     private val feeRepository: FeeRepository,
     private val loanRepository: LoanRepository,
-    private val bookPriceClient: InventoryBookPriceClient,
-    private val policy: FeePolicyConfiguration
+    private val bookPriceClient: CatalogBookPriceClient,
+    private val policy: FeePolicyConfiguration,
+    private val clock: Clock
 ) {
+    fun quote(
+        paymentId: String,
+        memberId: String,
+        selectedFeeIds: List<String>,
+        currency: String
+    ): PaymentQuote = quote(paymentId, memberId, selectedFeeIds, currency, ZonedDateTime.now(clock))
+
     fun quote(
         paymentId: String,
         memberId: String,
@@ -48,18 +61,24 @@ class FeeQuoteService(
         currency: String,
         quotedAt: ZonedDateTime
     ): PaymentQuote {
+        require(!quotedAt.isAfter(ZonedDateTime.now(clock))) { "A payment quote cannot be dated in the future" }
         require(selectedFeeIds.isNotEmpty()) { "At least one Fee must be selected" }
         require(selectedFeeIds.distinct().size == selectedFeeIds.size) { "A Fee may be selected only once" }
 
         val normalizedCurrency = currency.trim().uppercase()
         val feesById = feeRepository.findAllById(selectedFeeIds).associateBy { it.feeId }
         val fees = selectedFeeIds.map { feeId ->
-            feesById[feeId] ?: throw IllegalArgumentException("Fee $feeId does not exist")
+            feesById[feeId] ?: throw ResourceNotFoundException("Fee", feeId)
         }
 
         val quotes = fees.map { fee ->
-            require(fee.status == FeeStatus.UNPAID) { "Fee ${fee.feeId} is not UNPAID" }
+            if (fee.status != FeeStatus.UNPAID) {
+                throw StateConflictException("FEE_NOT_UNPAID", "Fee ${fee.feeId} is not UNPAID")
+            }
             require(fee.memberId == memberId) { "Fee ${fee.feeId} does not belong to member $memberId" }
+            require(!quotedAt.isBefore(fee.createdAt)) {
+                "A payment quote cannot predate Fee ${fee.feeId}"
+            }
             require(fee.currency == normalizedCurrency) {
                 "Fee ${fee.feeId} uses ${fee.currency}, not $normalizedCurrency"
             }
@@ -94,8 +113,17 @@ class FeeQuoteService(
 
     private fun replacementAmount(fee: Fee): BigDecimal {
         val loan = loanRepository.findById(fee.loanId)
-            .orElseThrow { IllegalStateException("Loan ${fee.loanId} does not exist") }
-        val price = bookPriceClient.findPrice(loan.bookId)
+            .orElseThrow { ResourceNotFoundException("Loan", fee.loanId) }
+        val price = try {
+            bookPriceClient.findPrice(loan.bookId)
+        } catch (exception: CatalogBookNotFoundException) {
+            throw exception
+        } catch (exception: CatalogServiceUnavailableException) {
+            throw exception
+        } catch (exception: Exception) {
+            causeOf<CatalogBookNotFoundException>(exception)?.let { throw it }
+            throw CatalogServiceUnavailableException(exception)
+        }
         val priceCurrency = price.currency.trim().uppercase()
         require(priceCurrency == fee.currency) {
             "Book ${loan.bookId} is priced in $priceCurrency, not ${fee.currency}"
@@ -126,6 +154,15 @@ class FeeQuoteService(
         UUID.nameUUIDFromBytes("payment:$paymentId:fee:$feeId".toByteArray(StandardCharsets.UTF_8)).toString()
 
     private fun BigDecimal.money(): BigDecimal = setScale(policy.moneyScale, policy.roundingMode)
+
+    private inline fun <reified T : Throwable> causeOf(exception: Throwable): T? {
+        var current: Throwable? = exception
+        while (current != null) {
+            if (current is T) return current
+            current = current.cause
+        }
+        return null
+    }
 
     private companion object {
         const val NANOS_PER_DAY = 86_400_000_000_000L

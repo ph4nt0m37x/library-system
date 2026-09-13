@@ -8,13 +8,17 @@ import com.inventoryservice.model.command.transfer.RejectTransferCommand
 import com.inventoryservice.model.command.transfer.ShipTransferCommand
 import com.inventoryservice.model.common.Identifier
 import com.inventoryservice.model.common.LabeledEntity
+import com.inventoryservice.model.entity.BookStock
 import com.inventoryservice.model.event.transfer.TransferAcceptedEvent
 import com.inventoryservice.model.event.transfer.TransferCancelledEvent
 import com.inventoryservice.model.event.transfer.TransferCompletedEvent
 import com.inventoryservice.model.event.transfer.TransferRejectedEvent
 import com.inventoryservice.model.event.transfer.TransferRequestedEvent
 import com.inventoryservice.model.event.transfer.TransferShippedEvent
+import com.inventoryservice.model.exception.DomainConflictException
+import com.inventoryservice.model.exception.DomainValidationException
 import com.inventoryservice.model.valueObject.LibraryId
+import com.inventoryservice.model.valueObject.BookId
 import com.inventoryservice.model.valueObject.TransferId
 import com.inventoryservice.model.valueObject.TransferStatus
 import jakarta.persistence.AttributeOverride
@@ -25,14 +29,16 @@ import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.Table
+import org.hibernate.annotations.Check
 import org.axonframework.commandhandling.CommandHandler
 import org.axonframework.eventsourcing.EventSourcingHandler
 import org.axonframework.modelling.command.AggregateIdentifier
 import org.axonframework.modelling.command.AggregateLifecycle
 import org.axonframework.spring.stereotype.Aggregate
-import java.time.LocalDateTime
+import java.time.Instant
 
 @Table(name = "transfer")
+@Check(constraints = "quantity >= 1 AND quantity <= 1000000")
 @Aggregate(repository = "axonTransferRepository")
 @Entity
 class Transfer() : LabeledEntity {
@@ -56,19 +62,39 @@ class Transfer() : LabeledEntity {
         column = Column(name = "destination_library_id")
     )
     private lateinit var destinationLibraryId: LibraryId
-    private lateinit var bookId: String
+    @Embedded
+    @AttributeOverride(name = "value", column = Column(name = "book_id"))
+    private lateinit var bookId: BookId
 
+    @Column(name = "quantity", nullable = false)
     private var quantity: Int = 0
 
     @Enumerated(EnumType.STRING)
     private lateinit var status: TransferStatus
 
+    @Column(name = "requested_by", nullable = false, length = 200)
     private lateinit var requestedBy: String
-    private lateinit var requestedAt: LocalDateTime
 
+    @Column(name = "requested_at", nullable = false)
+    private lateinit var requestedAt: Instant
+
+    @Column(name = "reviewed_by", length = 200)
     private var reviewedBy: String? = null
-    private var reviewedAt: LocalDateTime? = null
-    private var completedAt: LocalDateTime? = null
+
+    @Column(name = "reviewed_at")
+    private var reviewedAt: Instant? = null
+
+    @Column(name = "completed_at")
+    private var completedAt: Instant? = null
+
+    @Column(name = "failure_reason", length = 500)
+    private var failureReason: String? = null
+
+    @Column(name = "correlation_id", length = 100)
+    private var correlationId: String? = null
+
+    @Column(name = "causation_id", length = 100)
+    private var causationId: String? = null
 
 
     // CREATE
@@ -76,17 +102,15 @@ class Transfer() : LabeledEntity {
     @CommandHandler
     constructor(command: RequestTransferCommand) : this() {
 
-        require(command.quantity > 0) {
-            "Quantity must be greater than zero"
-        }
+        BookStock.validateChangeQuantity(command.quantity)
 
-        require(command.sourceLibraryId != command.destinationLibraryId) {
-            "Source and destination libraries must be different"
+        if (command.sourceLibraryId == command.destinationLibraryId) {
+            throw DomainValidationException("Source and destination libraries must be different")
         }
+        validateActor(command.requestedBy, "requestedBy")
 
         val event = TransferRequestedEvent(command)
 
-        this.on(event)
         AggregateLifecycle.apply(event)
     }
 
@@ -98,7 +122,10 @@ class Transfer() : LabeledEntity {
         this.bookId = event.bookId
         this.quantity = event.quantity
         this.requestedBy = event.requestedBy
-        this.requestedAt = LocalDateTime.now()
+        this.requestedAt = event.requestedAt
+        this.correlationId = event.correlationId
+        this.causationId = event.causationId
+        this.failureReason = null
         this.status = TransferStatus.REQUESTED
     }
 
@@ -107,13 +134,18 @@ class Transfer() : LabeledEntity {
     @CommandHandler
     fun accept(command: AcceptTransferCommand) {
 
-        require(status == TransferStatus.REQUESTED) {
-            "Only requested transfers can be accepted"
+        if (status != TransferStatus.REQUESTED) {
+            throw DomainConflictException("Only requested transfers can be accepted")
         }
+        validateActor(command.reviewedBy, "reviewedBy")
 
-        val event = TransferAcceptedEvent(command)
+        val event = TransferAcceptedEvent(
+            command = command,
+            sourceLibraryId = sourceLibraryId,
+            bookId = bookId,
+            quantity = quantity
+        )
 
-        this.on(event)
         AggregateLifecycle.apply(event)
     }
 
@@ -121,15 +153,16 @@ class Transfer() : LabeledEntity {
     fun on(event: TransferAcceptedEvent) {
         this.status = TransferStatus.ACCEPTED
         this.reviewedBy = event.reviewedBy
-        this.reviewedAt = LocalDateTime.now()
+        this.reviewedAt = event.reviewedAt
+        this.failureReason = null
     }
 
     // SHIP
 
     @CommandHandler
     fun ship(command: ShipTransferCommand) {
-        require(status == TransferStatus.ACCEPTED) {
-            "Only accepted transfers can be shipped"
+        if (status != TransferStatus.ACCEPTED) {
+            throw DomainConflictException("Only accepted transfers can be shipped")
         }
 
         val event = TransferShippedEvent(
@@ -139,7 +172,6 @@ class Transfer() : LabeledEntity {
             quantity = quantity
         )
 
-        this.on(event)
         AggregateLifecycle.apply(event)
     }
 
@@ -154,13 +186,13 @@ class Transfer() : LabeledEntity {
     @CommandHandler
     fun reject(command: RejectTransferCommand) {
 
-        require(status == TransferStatus.REQUESTED) {
-            "Only requested transfers can be rejected"
+        if (status != TransferStatus.REQUESTED) {
+            throw DomainConflictException("Only requested transfers can be rejected")
         }
+        validateActor(command.reviewedBy, "reviewedBy")
 
         val event = TransferRejectedEvent(command)
 
-        this.on(event)
         AggregateLifecycle.apply(event)
     }
 
@@ -168,7 +200,8 @@ class Transfer() : LabeledEntity {
     fun on(event: TransferRejectedEvent) {
         this.status = TransferStatus.REJECTED
         this.reviewedBy = event.reviewedBy
-        this.reviewedAt = LocalDateTime.now()
+        this.reviewedAt = event.reviewedAt
+        this.failureReason = event.reason
     }
 
     // CANCEL
@@ -176,22 +209,25 @@ class Transfer() : LabeledEntity {
     @CommandHandler
     fun cancel(command: CancelTransferCommand) {
 
-        require(
-            status == TransferStatus.REQUESTED ||
-                    status == TransferStatus.ACCEPTED
-        ) {
-            "Only requested or accepted transfers can be cancelled"
+        if (status != TransferStatus.REQUESTED && status != TransferStatus.ACCEPTED) {
+            throw DomainConflictException("Only requested or accepted transfers can be cancelled")
         }
 
-        val event = TransferCancelledEvent(command)
+        val event = TransferCancelledEvent(
+            command = command,
+            sourceLibraryId = sourceLibraryId,
+            bookId = bookId,
+            quantity = quantity,
+            releaseStock = status == TransferStatus.ACCEPTED
+        )
 
-        this.on(event)
         AggregateLifecycle.apply(event)
     }
 
     @EventSourcingHandler
     fun on(event: TransferCancelledEvent) {
         this.status = TransferStatus.CANCELLED
+        this.failureReason = event.reason
     }
 
 
@@ -199,8 +235,8 @@ class Transfer() : LabeledEntity {
 
     @CommandHandler
     fun complete(command: CompleteTransferCommand) {
-        require(status == TransferStatus.SHIPPED) {
-            "Only shipped transfers can be completed"
+        if (status != TransferStatus.SHIPPED) {
+            throw DomainConflictException("Only shipped transfers can be completed")
         }
 
         val event = TransferCompletedEvent(
@@ -210,14 +246,13 @@ class Transfer() : LabeledEntity {
             quantity = quantity
         )
 
-        this.on(event)
         AggregateLifecycle.apply(event)
     }
 
     @EventSourcingHandler
     fun on(event: TransferCompletedEvent) {
         this.status = TransferStatus.COMPLETED
-        this.completedAt = LocalDateTime.now()
+        this.completedAt = event.completedAt
     }
 
 
@@ -229,5 +264,42 @@ class Transfer() : LabeledEntity {
 
     override fun getLabel(): String {
         return "Transfer ${this.id}"
+    }
+
+    fun sourceLibraryId(): LibraryId = sourceLibraryId
+
+    fun id(): TransferId = id
+
+    fun destinationLibraryId(): LibraryId = destinationLibraryId
+
+    fun bookId(): BookId = bookId
+
+    fun quantity(): Int = quantity
+
+    fun status(): TransferStatus = status
+
+    fun requestedBy(): String = requestedBy
+
+    fun reviewedBy(): String? = reviewedBy
+
+    fun requestedAt(): Instant = requestedAt
+
+    fun reviewedAt(): Instant? = reviewedAt
+
+    fun completedAt(): Instant? = completedAt
+
+    fun failureReason(): String? = failureReason
+
+    fun correlationId(): String? = correlationId
+
+    fun causationId(): String? = causationId
+
+    private fun validateActor(value: String, field: String) {
+        if (value.isBlank()) {
+            throw DomainValidationException("$field must not be blank")
+        }
+        if (value.length > 200) {
+            throw DomainValidationException("$field must not exceed 200 characters")
+        }
     }
 }

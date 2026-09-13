@@ -71,7 +71,9 @@ class MemberEventHandler(
                     createdAt = event.createdAt,
                     amountPaid = event.amountPaid,
                     currency = event.currency,
-                    paidAt = event.paidAt
+                    paidAt = event.paidAt,
+                    paymentReference = event.paymentReference,
+                    paymentStatus = event.paymentStatus
                 )
             )
         }
@@ -92,7 +94,9 @@ class MemberEventHandler(
                     createdAt = event.createdAt,
                     amountPaid = event.amountPaid,
                     currency = event.currency,
-                    paidAt = event.paidAt
+                    paidAt = event.paidAt,
+                    paymentReference = event.paymentReference,
+                    paymentStatus = event.paymentStatus
                 )
             )
         }

@@ -11,4 +11,14 @@ interface BookCategoryService {
     fun deleteCategory(id: Long): Boolean
 
     fun findAllCategories(): List<BookCategory>
+
+    fun findById(id: Long): BookCategory?
+
+    fun existsById(id: Long): Boolean
+
+    fun existsByName(name: String): Boolean
+
+    fun existsByNameAndIdNot(name: String, id: Long): Boolean
+
+    fun isCategoryInUse(id: Long): Boolean
 }

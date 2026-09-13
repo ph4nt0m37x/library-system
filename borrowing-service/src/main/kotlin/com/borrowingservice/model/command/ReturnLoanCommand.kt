@@ -6,5 +6,6 @@ import java.time.ZonedDateTime
 data class ReturnLoanCommand(
     @TargetAggregateIdentifier
     val loanId: String,
-    val returnedAt: ZonedDateTime
+    @Deprecated("Normal loan return uses the server Clock")
+    val returnedAt: ZonedDateTime? = null
 )

@@ -10,6 +10,7 @@ data class RecordPaymentCommand(
     val memberId: String,
     val amount: BigDecimal,
     val currency: String,
-    val paidAt: ZonedDateTime,
+    @Deprecated("Normal payment recording uses the server Clock")
+    val paidAt: ZonedDateTime? = null,
     val feeIds: List<String>
 )

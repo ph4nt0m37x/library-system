@@ -10,5 +10,6 @@ data class SettleFeeCommand(
     val paymentId: String,
     val allocationId: String,
     val amount: BigDecimal,
-    val settledAt: ZonedDateTime
+    @Deprecated("Fee settlement uses the server Clock")
+    val settledAt: ZonedDateTime? = null
 )

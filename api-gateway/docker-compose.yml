@@ -1,0 +1,55 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.7.3
+    hostname: keycloak
+    container_name: keycloak
+    command:
+      - start-dev
+      - --import-realm
+      - --hostname=http://localhost:8180
+    restart: unless-stopped
+    ports:
+      - "8180:8080"
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      GATEWAY_SMOKE_CLIENT_SECRET: ${GATEWAY_SMOKE_CLIENT_SECRET:-gateway-smoke-secret}
+      MCP_SMOKE_CLIENT_SECRET: ${MCP_SMOKE_CLIENT_SECRET:-mcp-smoke-secret}
+    volumes:
+      - ./keycloak/import:/opt/keycloak/data/import:ro
+      - keycloak_data:/opt/keycloak/data
+    networks:
+      - shared_net
+
+  api-gateway:
+    build:
+      context: .
+    hostname: api-gateway
+    container_name: api-gateway
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      SERVER_PORT: 8000
+      SPRING_CLOUD_CONSUL_HOST: consul
+      SPRING_CLOUD_CONSUL_PORT: 8500
+      GATEWAY_CORS_ALLOWED_ORIGINS: http://localhost:5173
+      KEYCLOAK_ISSUER_URI: http://localhost:8180/realms/library-system
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/library-system/protocol/openid-connect/certs
+      KEYCLOAK_AUDIENCE: library-api
+    networks:
+      - shared_net
+    healthcheck:
+      test: [ "CMD", "curl", "--fail", "--silent", "--show-error", "--max-time", "3", "http://localhost:8000/actuator/health" ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+networks:
+  shared_net:
+    external: true
+
+volumes:
+  keycloak_data:

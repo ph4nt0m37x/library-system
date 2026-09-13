@@ -28,7 +28,15 @@ class LoanRestApiTest {
         val api = LoanRestApi(loanService, loanViewReadService)
         val borrowedAt = ZonedDateTime.parse("2026-09-10T10:00:00Z")
 
-        val response = api.createLoan(CreateLoanDTO("member-1", "book-1", borrowedAt)).join()
+        val response = api.createLoan(
+            CreateLoanDTO(
+                memberId = "member-1",
+                bookId = "book-1",
+                libraryId = "library-1",
+                borrowedAt = borrowedAt,
+                idempotencyKey = "checkout-1"
+            )
+        ).join()
 
         assertEquals(HttpStatus.CREATED, response.statusCode)
         assertEquals("loan-1", response.body?.id)
@@ -37,7 +45,9 @@ class LoanRestApiTest {
         val command = checkNotNull(loanService.createdLoan)
         assertEquals("member-1", command.memberId)
         assertEquals("book-1", command.bookId)
+        assertEquals("library-1", command.libraryId)
         assertEquals(borrowedAt, command.borrowedAt)
+        assertEquals("checkout-1", command.idempotencyKey)
     }
 
     private class RecordingLoanService : LoanService {
