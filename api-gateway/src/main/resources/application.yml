@@ -4,6 +4,12 @@ server:
 spring:
   application:
     name: api-gateway
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/library-system}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8180/realms/library-system/protocol/openid-connect/certs}
   cloud:
     consul:
       host: ${SPRING_CLOUD_CONSUL_HOST:localhost}
@@ -56,6 +62,10 @@ spring:
                   - OPTIONS
                 allowed-headers: "*"
                 allow-credentials: false
+
+security:
+  jwt:
+    audience: ${KEYCLOAK_AUDIENCE:library-api}
 
 management:
   endpoint:
