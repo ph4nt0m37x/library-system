@@ -1,0 +1,69 @@
+server:
+  port: ${SERVER_PORT:8000}
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    consul:
+      host: ${SPRING_CLOUD_CONSUL_HOST:localhost}
+      port: ${SPRING_CLOUD_CONSUL_PORT:8500}
+      config:
+        enabled: false
+      discovery:
+        service-name: ${spring.application.name}
+        instance-id: ${spring.application.name}-${random.uuid}
+        prefer-ip-address: true
+        health-check-path: /actuator/health
+        health-check-interval: 15s
+        health-check-critical-timeout: 1m
+        register-health-check: true
+        port: ${server.port}
+    gateway:
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: false
+          routes:
+            - id: catalog-service
+              uri: lb://catalog-service
+              predicates:
+                - Path=/api/books/**,/api/categories/**
+            - id: inventory-service
+              uri: lb://inventory-service
+              predicates:
+                - Path=/api/libraries/**,/api/stock/**,/api/transfers/**
+            - id: membership-service
+              uri: lb://membership-service
+              predicates:
+                - Path=/api/members/**
+            - id: borrowing-service
+              uri: lb://borrowing-service
+              predicates:
+                - Path=/api/loans/**,/api/fees/**,/api/payments/**,/api/borrowing-bans/**
+          globalcors:
+            add-to-simple-url-handler-mapping: true
+            cors-configurations:
+              '[/**]':
+                allowed-origins: ${GATEWAY_CORS_ALLOWED_ORIGINS:http://localhost:5173}
+                allowed-methods:
+                  - GET
+                  - POST
+                  - PUT
+                  - PATCH
+                  - DELETE
+                  - OPTIONS
+                allowed-headers: "*"
+                allow-credentials: false
+
+management:
+  endpoint:
+    gateway:
+      access: read-only
+    health:
+      show-details: always
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
