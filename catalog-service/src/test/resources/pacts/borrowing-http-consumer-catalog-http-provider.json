@@ -1,0 +1,88 @@
+{
+  "consumer": {
+    "name": "borrowing-http-consumer"
+  },
+  "interactions": [
+    {
+      "description": "a request for the replacement price",
+      "providerStates": [
+        {
+          "name": "book 22222222-2222-2222-2222-222222222222 is priced at 12.35 USD"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/books/22222222-2222-2222-2222-222222222222/price"
+      },
+      "response": {
+        "body": {
+          "amount": 12.35,
+          "currency": "USD"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "body": {
+            "$.amount": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "decimal"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a price request for a missing book",
+      "providerStates": [
+        {
+          "name": "book 22222222-2222-2222-2222-222222222223 does not exist or is deleted"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/books/22222222-2222-2222-2222-222222222223/price"
+      },
+      "response": {
+        "body": {
+          "code": "BOOK_NOT_FOUND",
+          "status": 404,
+          "title": "Not Found"
+        },
+        "headers": {
+          "Content-Type": "application/problem+json"
+        },
+        "matchingRules": {
+          "body": {
+            "$.status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            }
+          }
+        },
+        "status": 404
+      }
+    }
+  ],
+  "metadata": {
+    "pact-jvm": {
+      "version": "4.7.0"
+    },
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  },
+  "provider": {
+    "name": "catalog-http-provider"
+  }
+}
+

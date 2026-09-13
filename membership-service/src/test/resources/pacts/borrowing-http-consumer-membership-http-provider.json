@@ -1,0 +1,108 @@
+{
+  "consumer": {
+    "name": "borrowing-http-consumer"
+  },
+  "interactions": [
+    {
+      "description": "a request for active membership eligibility",
+      "providerStates": [
+        {
+          "name": "member 11111111-1111-1111-1111-111111111111 has an active subscription"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/members/11111111-1111-1111-1111-111111111111/subscription-status"
+      },
+      "response": {
+        "body": {
+          "active": true,
+          "currentPeriodEndsAt": "2026-12-31T23:59:59Z",
+          "exists": true,
+          "memberId": "11111111-1111-1111-1111-111111111111"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "body": {
+            "$.currentPeriodEndsAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a request for inactive membership eligibility",
+      "providerStates": [
+        {
+          "name": "member 11111111-1111-1111-1111-111111111111 has an inactive subscription"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/members/11111111-1111-1111-1111-111111111111/subscription-status"
+      },
+      "response": {
+        "body": {
+          "active": false,
+          "currentPeriodEndsAt": "2026-01-31T23:59:59Z",
+          "exists": true,
+          "memberId": "11111111-1111-1111-1111-111111111111"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "body": {
+            "$.currentPeriodEndsAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a request for missing membership eligibility",
+      "providerStates": [
+        {
+          "name": "member 11111111-1111-1111-1111-111111111112 does not exist"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/members/11111111-1111-1111-1111-111111111112/subscription-status"
+      },
+      "response": {
+        "status": 404
+      }
+    }
+  ],
+  "metadata": {
+    "pact-jvm": {
+      "version": "4.7.0"
+    },
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  },
+  "provider": {
+    "name": "membership-http-provider"
+  }
+}
+

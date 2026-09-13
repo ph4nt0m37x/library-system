@@ -1,0 +1,57 @@
+{
+  "consumer": {
+    "name": "inventory-http-consumer"
+  },
+  "interactions": [
+    {
+      "description": "a request to check an active book",
+      "providerStates": [
+        {
+          "name": "book 22222222-2222-2222-2222-222222222222 is active"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/books/22222222-2222-2222-2222-222222222222/available"
+      },
+      "response": {
+        "body": true,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a request to check a deleted book",
+      "providerStates": [
+        {
+          "name": "book 22222222-2222-2222-2222-222222222222 is deleted"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/books/22222222-2222-2222-2222-222222222222/available"
+      },
+      "response": {
+        "body": false,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "status": 200
+      }
+    }
+  ],
+  "metadata": {
+    "pact-jvm": {
+      "version": "4.7.0"
+    },
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  },
+  "provider": {
+    "name": "catalog-http-provider"
+  }
+}
+

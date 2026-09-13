@@ -1,6 +1,9 @@
 package com.borrowingservice.handlers.commandHandlers
 
 import com.borrowingservice.client.MembershipClient
+import com.borrowingservice.client.MembershipEligibilityResponse
+import com.borrowingservice.client.InventoryAvailabilityClient
+import com.borrowingservice.client.StockAvailabilityResponse
 import com.borrowingservice.config.LoanPolicyConfiguration
 import com.borrowingservice.model.aggregate.Loan
 import com.borrowingservice.model.command.CreateLoanCommand
@@ -43,6 +46,9 @@ class LoanCommandHandlerTest {
     @Mock
     private lateinit var membershipClient: MembershipClient
 
+    @Mock
+    private lateinit var inventoryAvailabilityClient: InventoryAvailabilityClient
+
     private lateinit var handler: LoanCommandHandler
 
     private val borrowedAt = ZonedDateTime.parse("2026-09-10T10:00:00Z")
@@ -55,6 +61,7 @@ class LoanCommandHandlerTest {
             feeRepository = feeRepository,
             banRecordRepository = banRecordRepository,
             membershipClient = membershipClient,
+            inventoryAvailabilityClient = inventoryAvailabilityClient,
             policy = LoanPolicyConfiguration(
                 maxActiveLoans = 5,
                 maxUnpaidFees = 3,
@@ -64,12 +71,24 @@ class LoanCommandHandlerTest {
             clock = Clock.fixed(borrowedAt.toInstant(), ZoneOffset.UTC)
         )
 
-        `when`(membershipClient.hasActiveSubscription(MEMBER_ID)).thenReturn(true)
+        `when`(membershipClient.subscriptionEligibility(MEMBER_ID)).thenReturn(
+            MembershipEligibilityResponse(MEMBER_ID, exists = true, active = true, currentPeriodEndsAt = null)
+        )
     }
 
     @Test
     fun `allows the fifth active loan`() {
         `when`(loanRepository.countByMemberIdAndStatus(MEMBER_ID, LoanStatus.ACTIVE)).thenReturn(4)
+        `when`(inventoryAvailabilityClient.availability(LIBRARY_ID, BOOK_ID)).thenReturn(
+            StockAvailabilityResponse(
+                libraryId = LIBRARY_ID,
+                bookId = BOOK_ID,
+                libraryActive = true,
+                bookActive = true,
+                availableQuantity = 1,
+                available = true
+            )
+        )
 
         val result = handler.handle(createLoanCommand())
 
@@ -92,12 +111,16 @@ class LoanCommandHandlerTest {
     private fun createLoanCommand() = CreateLoanCommand(
         loanId = LOAN_ID,
         memberId = MEMBER_ID,
-        bookId = "book-1",
-        borrowedAt = borrowedAt
+        bookId = BOOK_ID,
+        libraryId = LIBRARY_ID,
+        borrowedAt = borrowedAt,
+        idempotencyKey = "checkout-1"
     )
 
     private companion object {
         const val MEMBER_ID = "member-1"
         const val LOAN_ID = "loan-1"
+        const val BOOK_ID = "book-1"
+        const val LIBRARY_ID = "library-1"
     }
 }
