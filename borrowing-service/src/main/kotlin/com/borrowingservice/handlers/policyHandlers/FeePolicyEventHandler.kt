@@ -3,6 +3,7 @@ package com.borrowingservice.handlers.policyHandlers
 import com.borrowingservice.config.BanPolicyConfiguration
 import com.borrowingservice.model.command.IssueBorrowingBanCommand
 import com.borrowingservice.model.event.DamagedBookFeeCreatedEvent
+import com.borrowingservice.model.event.LostBookFeeCreatedEvent
 import com.borrowingservice.model.valueObject.enums.BanReason
 import com.borrowingservice.model.valueObject.enums.BanTier
 import com.borrowingservice.model.valueObject.enums.FeeReason
@@ -31,38 +32,48 @@ class FeePolicyEventHandler(
     @EventHandler
     @Transactional
     fun on(event: DamagedBookFeeCreatedEvent) {
-        val persistedDamageCount = feeRepository.countByLoanMemberIdAndReason(event.memberId, FeeReason.DAMAGED)
-        val damageCount = persistedDamageCount + if (feeRepository.existsById(event.feeId)) 0 else 1
-        val record = banRecordRepository.findByMemberId(event.memberId)
+        issueBanIfThresholdReached(event.feeId, event.memberId)
+    }
+
+    @EventHandler
+    @Transactional
+    fun on(event: LostBookFeeCreatedEvent) {
+        issueBanIfThresholdReached(event.feeId, event.memberId)
+    }
+
+    private fun issueBanIfThresholdReached(feeId: String, memberId: String) {
+        val persistedIncidentCount = feeRepository.countByLoanMemberIdAndReasonIn(memberId, BAN_FEE_REASONS)
+        val incidentCount = persistedIncidentCount + if (feeRepository.existsById(feeId)) 0 else 1
+        val record = banRecordRepository.findByMemberId(memberId)
         val lastTier = record?.lastIssuedTier ?: BanTier.NONE
         val nextTier = banPolicy.nextTierAfter(lastTier) ?: return
         val nextDefinition = banPolicy.definitionFor(nextTier)
-        if (damageCount < nextDefinition.damageThreshold) {
+        if (incidentCount < nextDefinition.damageThreshold) {
             return
         }
 
         val issuedAt = now()
         if (record?.hasActiveTemporaryBan(issuedAt) == true) {
             log.warn(
-                "Damage threshold for {} was reached by member {} while a temporary ban is active; " +
+                "Lost-or-damaged-book threshold for {} was reached by member {} while a temporary ban is active; " +
                     "the next tier is intentionally not issued until this open business decision is resolved",
                 nextTier,
-                event.memberId
+                memberId
             )
             return
         }
 
         commandGateway.sendAndWait<String>(
             IssueBorrowingBanCommand(
-                banRecordId = banRecordIdFor(event.memberId),
-                banId = banIdFor(event.memberId, nextTier),
-                memberId = event.memberId,
+                banRecordId = banRecordIdFor(memberId),
+                banId = banIdFor(memberId, nextTier),
+                memberId = memberId,
                 tier = nextTier,
                 startsAt = issuedAt,
                 endsAt = nextDefinition.duration?.let { issuedAt.plus(it) },
                 issuedAt = issuedAt,
-                triggeringFeeId = event.feeId,
-                reason = BanReason.REPEATED_PERMANENT_BOOK_DAMAGE
+                triggeringFeeId = feeId,
+                reason = BanReason.REPEATED_LOST_OR_DAMAGED_BOOKS
             )
         )
     }
@@ -78,6 +89,7 @@ class FeePolicyEventHandler(
     private fun now(): ZonedDateTime = ZonedDateTime.now(clock)
 
     private companion object {
+        val BAN_FEE_REASONS = setOf(FeeReason.LOST, FeeReason.DAMAGED)
         val log = LoggerFactory.getLogger(FeePolicyEventHandler::class.java)
     }
 }

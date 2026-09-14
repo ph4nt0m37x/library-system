@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import keycloak from "../keycloak";
 import styles from "../styles/BooksPage.module.css";
 
 function BooksPage() {
+  const navigate = useNavigate();
   const [books, setBooks] = useState([]);
   const [categories, setCategories] = useState([]);
 
@@ -822,7 +824,9 @@ function BooksPage() {
                       <div className={styles.cardActions}>
                         <button
                             type="button"
-                            onClick={() => {}}
+                            onClick={() =>
+                                navigate(`/books/${encodeURIComponent(bookId)}/availability`)
+                            }
                             className={
                               styles.availabilityButton
                             }

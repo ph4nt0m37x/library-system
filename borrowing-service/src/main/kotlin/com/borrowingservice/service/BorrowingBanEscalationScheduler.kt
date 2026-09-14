@@ -11,6 +11,7 @@ import org.axonframework.commandhandling.gateway.CommandGateway
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
 import java.nio.charset.StandardCharsets
 import java.time.Clock
 import java.time.ZonedDateTime
@@ -25,6 +26,7 @@ class BorrowingBanEscalationScheduler(
     private val clock: Clock
 ) {
     @Scheduled(fixedDelayString = "\${borrowing.bans.escalation-check-delay-ms:60000}")
+    @Transactional
     fun issueDeferredEscalations() {
         val now = ZonedDateTime.now(clock)
         banRecordRepository.findAll().forEach { record ->
@@ -32,12 +34,12 @@ class BorrowingBanEscalationScheduler(
 
             val nextTier = banPolicy.nextTierAfter(record.lastIssuedTier) ?: return@forEach
             val definition = banPolicy.definitionFor(nextTier)
-            val damageCount = feeRepository.countByLoanMemberIdAndReason(record.memberId, FeeReason.DAMAGED)
-            if (damageCount < definition.damageThreshold) return@forEach
+            val incidentCount = feeRepository.countByLoanMemberIdAndReasonIn(record.memberId, BAN_FEE_REASONS)
+            if (incidentCount < definition.damageThreshold) return@forEach
 
-            val triggeringFee = feeRepository.findFirstByMemberIdAndReasonOrderByCreatedAtDesc(
+            val triggeringFee = feeRepository.findFirstByMemberIdAndReasonInOrderByCreatedAtDesc(
                 record.memberId,
-                FeeReason.DAMAGED
+                BAN_FEE_REASONS
             ) ?: return@forEach
 
             runCatching {
@@ -51,7 +53,7 @@ class BorrowingBanEscalationScheduler(
                         endsAt = definition.duration?.let(now::plus),
                         issuedAt = now,
                         triggeringFeeId = triggeringFee.feeId,
-                        reason = BanReason.REPEATED_PERMANENT_BOOK_DAMAGE
+                        reason = BanReason.REPEATED_LOST_OR_DAMAGED_BOOKS
                     )
                 )
             }.onFailure {
@@ -64,6 +66,7 @@ class BorrowingBanEscalationScheduler(
         UUID.nameUUIDFromBytes(value.toByteArray(StandardCharsets.UTF_8)).toString()
 
     private companion object {
+        val BAN_FEE_REASONS = setOf(FeeReason.LOST, FeeReason.DAMAGED)
         val log = LoggerFactory.getLogger(BorrowingBanEscalationScheduler::class.java)
     }
 }

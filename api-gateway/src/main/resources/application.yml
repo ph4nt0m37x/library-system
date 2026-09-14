@@ -18,7 +18,7 @@ spring:
         enabled: false
       discovery:
         service-name: ${spring.application.name}
-        instance-id: ${spring.application.name}-${random.uuid}
+        instance-id: ${spring.application.name}
         prefer-ip-address: true
         health-check-path: /actuator/health
         health-check-interval: 15s

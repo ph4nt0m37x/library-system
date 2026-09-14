@@ -33,13 +33,18 @@ interface FeeRepository : JpaRepository<Fee, String> {
         select count(f)
         from Fee f
         join Loan l on l.loanId = f.loanId
-        where l.memberId = :memberId and f.reason = :reason
+        where l.memberId = :memberId and f.reason in :reasons
         """
     )
-    fun countByLoanMemberIdAndReason(
+    fun countByLoanMemberIdAndReasonIn(
         @Param("memberId") memberId: String,
-        @Param("reason") reason: FeeReason
+        @Param("reasons") reasons: Collection<FeeReason>
     ): Long
+
+    fun findFirstByMemberIdAndReasonInOrderByCreatedAtDesc(
+        memberId: String,
+        reasons: Collection<FeeReason>
+    ): Fee?
 }
 
 interface PaymentRepository : JpaRepository<Payment, String>

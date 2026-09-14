@@ -49,12 +49,12 @@ function TransfersPage() {
 
   return (
     <div>
-      <h1>Transfers</h1>
+      <h1>Book Requests</h1>
 
-      <button>Create Transfer</button>
+      <p>Request copies from a library through that book's stock row.</p>
 
       {transfers.length === 0 ? (
-        <p>No transfers found.</p>
+        <p>No book requests found.</p>
       ) : (
         <div>
           {transfers.map((transfer) => (
@@ -66,28 +66,25 @@ function TransfersPage() {
               }
             >
               <h2>
-                Transfer{" "}
+                Book Request{" "}
                 {transfer.id?.value ??
                   transfer.id?.id ??
                   transfer.id}
               </h2>
 
               <p>
-                Book ID:{" "}
-                {transfer.bookId?.value ??
-                  transfer.bookId?.id ??
-                  transfer.bookId}
+                Book ID: {transfer.titleId}
               </p>
 
               <p>
-                Source Library:{" "}
+                Supplying Library:{" "}
                 {transfer.sourceLibraryId?.value ??
                   transfer.sourceLibraryId?.id ??
                   transfer.sourceLibraryId}
               </p>
 
               <p>
-                Destination Library:{" "}
+                Requesting Library:{" "}
                 {transfer.destinationLibraryId?.value ??
                   transfer.destinationLibraryId?.id ??
                   transfer.destinationLibraryId}

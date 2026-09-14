@@ -51,7 +51,7 @@ class PaymentRestApi(
             paymentId = UUID.randomUUID().toString(),
             memberId = dto.memberId,
             feeIds = dto.feeIds,
-            currency = dto.currency,
+            currency = "MKD",
             quotedAt = dto.quotedAt
         )
         return ResponseEntity.ok(
@@ -82,7 +82,7 @@ class PaymentRestApi(
                 paymentId = dto.paymentId,
                 memberId = dto.memberId,
                 amount = dto.amount,
-                currency = dto.currency,
+                currency = "MKD",
                 paidAt = dto.paidAt,
                 feeIds = dto.feeIds
             )

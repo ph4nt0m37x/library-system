@@ -42,9 +42,11 @@
     text-align: center;
 }
 
-.header > button {
+.headerActions {
     grid-column: 3;
     justify-self: end;
+    display: flex;
+    gap: 10px;
 }
 
 .title {
@@ -509,4 +511,29 @@
     justify-content: flex-end;
     gap: 10px;
     margin-top: 20px;
+}
+
+.pendingTransfers {
+    margin-top: 32px;
+    padding: 20px;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #f9fafb;
+}
+
+.pendingTransfers h2 {
+    margin: 0 0 14px;
+    font-size: 1.25rem;
+}
+
+.transferRequest {
+    padding: 14px;
+    margin-top: 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #ffffff;
+}
+
+.transferRequest p {
+    margin: 0 0 8px;
 }

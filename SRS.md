@@ -4,7 +4,7 @@
 
 Version 1.0  
 Status: As-built baseline  
-Date: 13 September 2026  
+Date: 15 September 2026
 Format: IEEE 830-inspired
 
 ---
@@ -73,7 +73,7 @@ The system consists of four independently deployable services:
 
 The services provide JSON REST APIs. They use synchronous service-to-service HTTP calls for decisions that must be made before accepting a command and Kafka events for asynchronous propagation of catalog retirement and circulation changes. Each service owns a separate MySQL database. Consul provides service discovery. Axon Framework supports command handling, domain events, and read projections.
 
-A React/Vite directory exists in the repository, but it currently contains only starter content. A production library user interface is therefore not part of this SRS baseline.
+A React/Vite single-page application provides the operational browser interface. It supports catalog, category, library, stock, loan, member, subscription, fee-payment, transfer-request, and book-availability workflows through the API gateway. It uses Keycloak browser authentication and sends the resulting bearer token to the gateway.
 
 ## 1.3 Intended Audience
 
@@ -194,7 +194,7 @@ A library member is the subject of registration, subscription, borrowing, fee, p
 
 ### 2.3.2 Librarian or Library Administrator
 
-A librarian operates catalog, member, inventory, transfer, circulation, and payment workflows through an API client or a future user interface. The user should understand book identifiers, member identifiers, library identifiers, ISBNs, and basic circulation policies.
+A librarian operates catalog, member, inventory, transfer, circulation, and payment workflows through the React browser interface or a compatible API client. The user should understand book identifiers, member identifiers, library identifiers, ISBNs, and basic circulation policies.
 
 ### 2.3.3 System Operator
 
@@ -216,6 +216,7 @@ The supported implementation environment consists of:
 - Apache Kafka for integration events;
 - Consul 1.18 for service discovery;
 - Docker and Docker Compose for the provided deployment definitions; and
+- a React 19/Vite browser client served during local development on port 5173; and
 - an HTTP client capable of sending and receiving JSON.
 
 Canonical local service ports are:
@@ -239,7 +240,7 @@ Canonical local service ports are:
 - **CON-05:** Monetary values shall use decimal arithmetic and explicitly configured currency and rounding rules.
 - **CON-06:** Kafka integration events shall currently use schema version 1.
 - **CON-07:** The development deployment uses a single Kafka broker and is not a high-availability topology.
-- **CON-08:** The current codebase does not provide API authentication, authorization, transport-layer configuration, or a production user interface.
+- **CON-08:** The API gateway validates Keycloak-issued JWT bearer tokens for its configured issuer and audience. Fine-grained business roles and permissions are not currently implemented.
 - **CON-09:** Hibernate schema mode is configured as `update`; production schema migration and rollback procedures are not supplied by this repository.
 - **CON-10:** The Borrowing Service shall not start until a billable time zone and billable-day rule are configured explicitly.
 
@@ -268,7 +269,7 @@ Canonical local service ports are:
 
 The following capabilities are not included in the current product baseline:
 
-- a completed web or mobile user interface;
+- a native mobile application;
 - user login, identity management, roles, and authorization enforcement;
 - reservations, holds, waitlists, and notifications;
 - acquisition, supplier, purchase-order, and accounting workflows;
@@ -385,6 +386,8 @@ The repository defaults are three months for MKD 900.00, six months for MKD 1500
 - **FR-TRN-011 (P1):** Cancelling an accepted transfer shall release its reserved source stock.
 - **FR-TRN-012 (P2):** A rejection or cancellation may include a reason of no more than 200 characters.
 - **FR-TRN-013 (P2):** The system shall retrieve a transfer by identifier and list transfers optionally filtered by source library, destination library, book, and status.
+- **FR-TRN-014 (P2):** The browser interface shall let a destination library request copies by selecting a supplying source library, a book available at that source, and a quantity no greater than its available source stock.
+- **FR-TRN-015 (P2):** The browser interface shall show requested book supplies at the source library and allow staff to approve and send, or decline, each request. Approval shall perform the accept, ship, and complete workflow steps.
 
 The permitted state transitions are:
 
@@ -433,12 +436,12 @@ The default borrowing policy permits five active loans, permits fewer than three
 - **FR-FEE-011 (P1):** Billable overdue days shall follow the explicitly configured `STARTED_CALENDAR_DAYS` or `STARTED_24_HOUR_PERIODS` rule.
 - **FR-FEE-012 (P2):** The system shall list all fees, retrieve a fee by identifier, list a member's fees, and list a member's unpaid fees.
 
-Default fee configuration is USD, USD 0.50 per late day, a 30-day replacement-price threshold, a 1.00 replacement multiplier, scale 2, and `HALF_UP` rounding. The deployment must explicitly choose the billable time zone and day rule.
+Default fee configuration is MKD, MKD 0.50 per late day, a 30-day replacement-price threshold, a 1.00 replacement multiplier, scale 2, and `HALF_UP` rounding. The deployment must explicitly choose the billable time zone and day rule.
 
 ### 3.2.9 Payments
 
 - **FR-PAY-001 (P1):** The system shall quote a payment for a non-empty selected set of the member's unpaid fees.
-- **FR-PAY-002 (P1):** All selected fees shall belong to the supplied member and use the requested currency.
+- **FR-PAY-002 (P1):** All selected fees shall belong to the supplied member and use MKD. Quote and record commands shall persist MKD regardless of a client-supplied currency value.
 - **FR-PAY-003 (P1):** A quote shall include a generated payment identifier, total amount, server quote time, fee identifiers, deterministic allocation identifiers, and per-fee amounts.
 - **FR-PAY-004 (P1):** Recording a payment shall recalculate the quote and require the submitted amount to equal the calculated total exactly.
 - **FR-PAY-005 (P1):** Recording a payment shall atomically create the payment, create its allocations, and settle its selected fees within the Borrowing Service's local transaction.
@@ -450,7 +453,7 @@ Default fee configuration is USD, USD 0.50 per late day, a 30-day replacement-pr
 
 ### 3.2.10 Borrowing Bans
 
-- **FR-BAN-001 (P1):** The system shall count a member's permanent-damage fees when evaluating damage-ban escalation.
+- **FR-BAN-001 (P1):** The system shall count a member's lost-book and permanent-damage fees together when evaluating borrowing-ban escalation.
 - **FR-BAN-002 (P1):** The first configured threshold shall create a `TIER_1` temporary ban.
 - **FR-BAN-003 (P1):** The second configured threshold shall create a `TIER_2` temporary ban after the first tier has been issued.
 - **FR-BAN-004 (P1):** The final configured threshold shall create a `PERMANENT` ban after the second tier has been issued.
@@ -460,7 +463,7 @@ Default fee configuration is USD, USD 0.50 per late day, a 30-day replacement-pr
 - **FR-BAN-008 (P2):** The system shall return each ban record's current state and complete period history.
 - **FR-BAN-009 (P2):** The system shall list all ban records, retrieve one by identifier, and retrieve a member's ban record.
 
-The default thresholds are 10 permanent-damage fees for a one-month Tier 1 ban, 20 for a three-month Tier 2 ban, and 30 for a permanent ban.
+The default thresholds are 5 lost-or-damaged-book fees for a one-month Tier 1 ban, 10 for a three-month Tier 2 ban, and 15 for a permanent ban.
 
 ### 3.2.11 Integration Events
 
@@ -482,6 +485,14 @@ The default thresholds are 10 permanent-damage fees for a one-month Tier 1 ban, 
 - **FR-QRY-002 (P1):** Read APIs shall use persisted projections appropriate to their service.
 - **FR-QRY-003 (P1):** A successful asynchronous command response shall not imply that every downstream service or tracking projection has already applied the resulting event.
 - **FR-QRY-004 (P2):** Clients should retry a read with bounded delay when an immediately preceding accepted command is not yet visible in a projection.
+
+### 3.2.13 Browser User Interface
+
+- **FR-UI-001 (P1):** The browser interface shall provide routes for catalog books, book details, book availability, libraries, branch stock, members, member details, loans, transfers, categories, and login.
+- **FR-UI-002 (P1):** The book catalog shall provide an availability action that opens a dedicated page listing every library that stocks the selected book with its total, available, and borrowed quantities.
+- **FR-UI-003 (P1):** From a branch stock row, the browser interface shall let staff create a loan by searching members by membership number and selecting a member. The current library and book shall be supplied automatically.
+- **FR-UI-004 (P2):** After a browser loan request or approved book request, the interface shall use bounded polling before presenting refreshed stock or loan state, without repeatedly showing the page-wide loading view.
+- **FR-UI-005 (P2):** The interface shall label transfer actions as book requests: the current library requests copies, the selected source library supplies them, and the source library approves and sends or declines the request.
 
 ## 3.3 External Interface Requirements
 
@@ -753,8 +764,9 @@ The current backend baseline is accepted when all of the following are true:
 7. HTTP provider/consumer and Kafka provider/consumer contracts pass.
 8. Replayed integration events do not repeat stock mutations.
 9. Invalid and irrecoverably out-of-order records reach a DLT without corrupting inventory.
-10. Health and required operational metrics are available.
-11. No images or binary diagrams are required to interpret this specification.
+10. The browser workflows for availability, loans, and book requests satisfy FR-UI requirements.
+11. Health and required operational metrics are available.
+12. No images or binary diagrams are required to interpret this specification.
 
 A public production deployment is not accepted until NFR-SEC-001 through NFR-SEC-004 are implemented and verified.
 
@@ -768,6 +780,7 @@ A public production deployment is not accepted until NFR-SEC-001 through NFR-SEC
 | FR-LON | `borrowing-service` loan handlers and API | Loan handler/API and dependency contract tests |
 | FR-FEE, FR-PAY, FR-BAN | `borrowing-service` policies, handlers, and API | Policy, calculation, aggregate, and API tests |
 | FR-EVT, FRR | Catalog/Borrowing outboxes and Inventory inbox/listeners | Kafka provider/consumer, replay, and failure tests |
+| FR-UI | `frontend/src` routes and pages | Frontend build plus browser workflow tests |
 | IR-SVC | Feign clients and provider APIs | Pact HTTP consumer/provider tests |
 | IR-OPS, NFR-REL | Actuator, metrics, Kafka configuration | Operational integration tests |
 | NFR-SEC | Deployment/API security layer | Security tests required before production |
@@ -788,14 +801,14 @@ A public production deployment is not accepted until NFR-SEC-001 through NFR-SEC
 | Unpaid-fee rejection threshold | 3 |
 | Regular loan period | 14 days |
 | Extension | One extension of 14 days |
-| Fee currency | USD |
-| Daily late fee | USD 0.50 |
+| Fee currency | MKD |
+| Daily late fee | MKD 0.50 |
 | Replacement-price threshold | 30 billable late days |
 | Replacement multiplier | 1.00 |
 | Money rounding | Scale 2, `HALF_UP` |
-| Tier 1 damage ban | 10 damaged-book fees; 1 month |
-| Tier 2 damage ban | 20 damaged-book fees; 3 months |
-| Permanent damage ban | 30 damaged-book fees |
+| Tier 1 borrowing ban | 5 lost-or-damaged-book fees; 1 month |
+| Tier 2 borrowing ban | 10 lost-or-damaged-book fees; 3 months |
+| Permanent borrowing ban | 15 lost-or-damaged-book fees |
 | Event schema version | 1 |
 | Outbox publish delay | 1 second |
 | Outbox maximum attempts | 20 |
@@ -804,8 +817,8 @@ Configuration values are part of the current baseline, not immutable universal l
 
 ## 5.2 Known Limitations and Open Decisions
 
-1. **Authentication and authorization:** No security layer currently protects the APIs. This must be designed before production exposure.
-2. **User interface:** The React/Vite project is starter content and does not implement the library workflows.
+1. **Authorization:** The API gateway validates JWTs, but role-based business permissions and a documented access-control matrix are not implemented.
+2. **User interface:** The React/Vite application implements the primary operational workflows, but it has no automated end-to-end browser test suite and does not yet provide responsive mobile-specific design.
 3. **Final-copy race:** Availability checking does not reserve stock atomically. A strict last-copy guarantee requires the design described in FRR-011.
 4. **Billable time policy:** `BORROWING_FEES_BILLABLE_TIME_ZONE` and `BORROWING_FEES_BILLABLE_DAY_RULE` have no safe business default and must be chosen explicitly.
 5. **Ban escalation during an active temporary ban:** When the next damage threshold is reached while a temporary ban is still active, the implementation records a warning and does not issue the next tier. The business must decide whether escalation should be immediate, queued, or applied after expiry.

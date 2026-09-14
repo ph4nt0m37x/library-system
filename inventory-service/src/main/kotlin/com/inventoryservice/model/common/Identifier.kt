@@ -12,7 +12,7 @@ abstract class Identifier<T>(providedValue: String, @Transient val entityClass: 
         return this.entityClass.hashCode() + this.value.hashCode()
     }
 
-    fun baseValue() = value.split(":")[1]
+    fun baseValue() = value.substringAfter(":")
 
     fun prefixedValue() = value
 
