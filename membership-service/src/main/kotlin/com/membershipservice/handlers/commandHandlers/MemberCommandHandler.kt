@@ -1,7 +1,6 @@
 package com.membershipservice.handlers.commandHandlers
 
 import com.membershipservice.config.MembershipTierConfiguration
-import com.membershipservice.config.MembershipTierDefinition
 import com.membershipservice.model.aggregate.Member
 import com.membershipservice.model.command.RegisterMemberCommand
 import com.membershipservice.model.command.RenewSubscriptionCommand
@@ -18,13 +17,12 @@ import com.membershipservice.model.valueObject.MembershipNumber
 import com.membershipservice.model.valueObject.SubscriptionId
 import com.membershipservice.model.valueObject.enums.SubscriptionPaymentStatus
 import com.membershipservice.repository.MemberRepository
-import com.membershipservice.repository.SubscriptionPeriodRepository
 import org.axonframework.commandhandling.CommandHandler
 import org.axonframework.modelling.command.AggregateLifecycle
 import org.axonframework.modelling.command.Repository
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
-import java.math.BigDecimal
+import java.security.SecureRandom
 import java.time.Clock
 import java.time.ZonedDateTime
 
@@ -32,21 +30,19 @@ import java.time.ZonedDateTime
 class MemberCommandHandler(
     @Qualifier("axonMemberRepository") private val memberAggregateRepository: Repository<Member>,
     private val memberRepository: MemberRepository,
-    private val subscriptionPeriodRepository: SubscriptionPeriodRepository,
     private val tierConfiguration: MembershipTierConfiguration,
     private val subscriptionDateCalculator: SubscriptionDateCalculator,
     private val clock: Clock
 ) {
+    private val secureRandom = SecureRandom()
+
     @CommandHandler
     fun handle(command: RegisterMemberCommand): MemberId {
         validateName(command.firstName, command.lastName)
         val memberId = MemberId()
-        val membershipNumber = MembershipNumber(memberId.baseValue())
+        val membershipNumber = generateUniqueMembershipNumber()
 
         require(!memberRepository.existsById(memberId)) { "Generated member ID already exists" }
-        require(!memberRepository.existsByMembershipNumber(membershipNumber)) {
-            "Membership number already exists"
-        }
         require(memberRepository.findByEmail(command.email) == null) { "Email address already exists" }
 
         val event = MemberRegisteredEvent(
@@ -62,6 +58,17 @@ class MemberCommandHandler(
             Member().also { AggregateLifecycle.apply(event) }
         }
         return memberId
+    }
+
+    private fun generateUniqueMembershipNumber(): MembershipNumber {
+        while (true) {
+            val candidate = MembershipNumber(
+                secureRandom.nextInt(MIN_MEMBERSHIP_NUMBER, MAX_MEMBERSHIP_NUMBER_EXCLUSIVE).toString()
+            )
+            if (!memberRepository.existsByMembershipNumber(candidate)) {
+                return candidate
+            }
+        }
     }
 
     @CommandHandler
@@ -109,15 +116,6 @@ class MemberCommandHandler(
 
         memberAggregateRepository.load(command.memberId.prefixedValue()).execute { member ->
             require(member.subscriptions.isEmpty()) { "A subscription has already been started for this member" }
-            val paymentReference = validatePayment(
-                command.amountPaid,
-                command.currency,
-                command.paidAt,
-                command.paymentReference,
-                tierDefinition,
-                member.registeredAt,
-                createdAt
-            )
             AggregateLifecycle.apply(
                 SubscriptionStartedEvent(
                     subscriptionId = subscriptionId,
@@ -127,9 +125,9 @@ class MemberCommandHandler(
                     endsAt = subscriptionDateCalculator.endsAt(command.startsAt, tierDefinition.durationMonths),
                     createdAt = createdAt,
                     amountPaid = tierDefinition.price,
-                    currency = tierDefinition.currency,
-                    paidAt = command.paidAt,
-                    paymentReference = paymentReference,
+                    currency = "MKD",
+                    paidAt = createdAt,
+                    paymentReference = null,
                     paymentStatus = SubscriptionPaymentStatus.SETTLED
                 )
             )
@@ -147,15 +145,6 @@ class MemberCommandHandler(
             require(member.subscriptions.isNotEmpty()) {
                 "A subscription must be started before it can be renewed"
             }
-            val paymentReference = validatePayment(
-                command.amountPaid,
-                command.currency,
-                command.paidAt,
-                command.paymentReference,
-                tierDefinition,
-                member.registeredAt,
-                createdAt
-            )
             val previousPeriod = member.subscriptions.maxBy { it.endsAt }
             val startsAt = subscriptionDateCalculator.renewalStartsAt(createdAt, previousPeriod.endsAt)
             AggregateLifecycle.apply(
@@ -168,9 +157,9 @@ class MemberCommandHandler(
                     endsAt = subscriptionDateCalculator.endsAt(startsAt, tierDefinition.durationMonths),
                     createdAt = createdAt,
                     amountPaid = tierDefinition.price,
-                    currency = tierDefinition.currency,
-                    paidAt = command.paidAt,
-                    paymentReference = paymentReference,
+                    currency = "MKD",
+                    paidAt = createdAt,
+                    paymentReference = null,
                     paymentStatus = SubscriptionPaymentStatus.SETTLED
                 )
             )
@@ -185,31 +174,9 @@ class MemberCommandHandler(
         require(lastName.trim().length <= 100) { "Last name must not exceed 100 characters" }
     }
 
-    private fun validatePayment(
-        amountPaid: BigDecimal,
-        currency: String,
-        paidAt: ZonedDateTime,
-        paymentReference: String,
-        tierDefinition: MembershipTierDefinition,
-        registeredAt: ZonedDateTime,
-        createdAt: ZonedDateTime
-    ): String {
-        require(amountPaid > BigDecimal.ZERO) { "Amount paid must be positive" }
-        require(amountPaid.compareTo(tierDefinition.price) == 0) {
-            "Amount paid must be ${tierDefinition.price} for tier ${tierDefinition.tierCode}"
-        }
-        require(currency.trim().uppercase() == tierDefinition.currency) {
-            "Currency must be ${tierDefinition.currency}"
-        }
-        require(!paidAt.isAfter(createdAt)) { "Payment timestamp must not be in the future" }
-        require(!paidAt.isBefore(registeredAt)) { "Payment timestamp must not predate member registration" }
-
-        val normalizedReference = paymentReference.trim()
-        require(normalizedReference.isNotEmpty()) { "Payment reference must not be blank" }
-        require(normalizedReference.length <= 100) { "Payment reference must not exceed 100 characters" }
-        require(!subscriptionPeriodRepository.existsByPaymentReference(normalizedReference)) {
-            "Payment reference has already been used"
-        }
-        return normalizedReference
+    private companion object {
+        const val MIN_MEMBERSHIP_NUMBER = 10_000
+        const val MAX_MEMBERSHIP_NUMBER_EXCLUSIVE = 100_000
     }
+
 }

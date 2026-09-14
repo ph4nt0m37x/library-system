@@ -115,8 +115,7 @@ class MemberRestApi(
     ): CompletableFuture<ResponseEntity<CommandResponse>> =
         memberService.startSubscription(
             StartSubscriptionCommand(
-                MemberId(id), dto.tier, dto.startsAt,
-                dto.amountPaid, dto.currency, dto.paidAt, dto.paymentReference
+                MemberId(id), dto.tier, dto.startsAt
             )
         ).thenApply { ResponseEntity.ok(CommandResponse(it.baseValue())) }
 
@@ -128,8 +127,7 @@ class MemberRestApi(
     ): CompletableFuture<ResponseEntity<CommandResponse>> =
         memberService.renewSubscription(
             RenewSubscriptionCommand(
-                MemberId(id), dto.tier,
-                dto.amountPaid, dto.currency, dto.paidAt, dto.paymentReference
+                MemberId(id), dto.tier
             )
         ).thenApply { ResponseEntity.ok(CommandResponse(it.baseValue())) }
 }
