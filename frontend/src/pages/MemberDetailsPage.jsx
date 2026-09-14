@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import keycloak from "../keycloak";
 
 function MemberDetailsPage() {
@@ -19,6 +19,18 @@ function MemberDetailsPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
+
+    // Subscription modal
+    const [showSubscriptionModal, setShowSubscriptionModal] =
+        useState(false);
+
+    const [subscriptionForm, setSubscriptionForm] = useState({
+        tier: "THREE_MONTHS",
+        startsAt: "",
+    });
+
+    const [startingSubscription, setStartingSubscription] =
+        useState(false);
 
     const fetchMember = async () => {
         const response = await fetch(
@@ -57,6 +69,7 @@ useEffect(() => {
             await fetchMember();
         } catch (err) {
             console.error(err);
+
             setError(
                 err.message || "Failed to load member."
             );
@@ -67,6 +80,10 @@ useEffect(() => {
 
     loadMember();
 }, [id]);
+
+// -----------------------------
+// Member editing
+// -----------------------------
 
 const handleChange = (e) => {
     const { name, value } = e.target;
@@ -136,10 +153,12 @@ const handleSave = async () => {
             );
 
             if (!nameResponse.ok) {
-                const message = await nameResponse.text();
+                const message =
+                    await nameResponse.text();
 
                 throw new Error(
-                    message || "Failed to update member name."
+                    message ||
+                    "Failed to update member name."
                 );
             }
         }
@@ -161,7 +180,8 @@ const handleSave = async () => {
             );
 
             if (!contactResponse.ok) {
-                const message = await contactResponse.text();
+                const message =
+                    await contactResponse.text();
 
                 throw new Error(
                     message ||
@@ -170,12 +190,7 @@ const handleSave = async () => {
             }
         }
 
-        /*
-         * The command succeeded, but the Axon read model
-         * may need a moment to update.
-         *
-         * Reload a few times until the new values appear.
-         */
+        // Axon read model may need a moment to update
         let updatedMember = null;
 
         for (let attempt = 0; attempt < 5; attempt++) {
@@ -186,10 +201,13 @@ const handleSave = async () => {
             updatedMember = await fetchMember();
 
             const updated =
-                updatedMember.firstName === form.firstName &&
-                updatedMember.lastName === form.lastName &&
+                updatedMember.firstName ===
+                form.firstName &&
+                updatedMember.lastName ===
+                form.lastName &&
                 updatedMember.email === form.email &&
-                updatedMember.phoneNumber === form.phoneNumber;
+                updatedMember.phoneNumber ===
+                form.phoneNumber;
 
             if (updated) {
                 break;
@@ -207,6 +225,125 @@ const handleSave = async () => {
         setSaving(false);
     }
 };
+
+// -----------------------------
+// Subscription
+// -----------------------------
+
+const handleSubscriptionChange = (e) => {
+    const { name, value } = e.target;
+
+    setSubscriptionForm((previous) => ({
+        ...previous,
+        [name]: value,
+    }));
+};
+
+const openSubscriptionModal = () => {
+    setError("");
+
+    setSubscriptionForm({
+        tier: "THREE_MONTHS",
+        startsAt: "",
+    });
+
+    setShowSubscriptionModal(true);
+};
+
+const closeSubscriptionModal = () => {
+    if (startingSubscription) {
+        return;
+    }
+
+    setShowSubscriptionModal(false);
+
+    setSubscriptionForm({
+        tier: "THREE_MONTHS",
+        startsAt: "",
+    });
+};
+
+const handleStartSubscription = async () => {
+    if (
+        !subscriptionForm.tier ||
+        !subscriptionForm.startsAt
+    ) {
+        setError(
+            "Please select a tier and start date."
+        );
+
+        return;
+    }
+
+    try {
+        setStartingSubscription(true);
+        setError("");
+
+        const response = await fetch(
+            `http://localhost:8000/api/members/${member.memberId}/subscriptions/start`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${keycloak.token}`,
+                },
+                body: JSON.stringify({
+                    tier: subscriptionForm.tier,
+                    startsAt: subscriptionForm.startsAt,
+                }),
+            }
+        );
+
+        if (!response.ok) {
+            const message =
+                await response.text();
+
+            throw new Error(
+                message ||
+                "Failed to start subscription."
+            );
+        }
+
+        setShowSubscriptionModal(false);
+
+        setSubscriptionForm({
+            tier: "THREE_MONTHS",
+            startsAt: "",
+        });
+
+        /*
+         * The command succeeded, but the Axon read model
+         * may need a moment to update.
+         */
+        for (let attempt = 0; attempt < 5; attempt++) {
+            await new Promise((resolve) =>
+                setTimeout(resolve, 300)
+            );
+
+            const updatedMember =
+                await fetchMember();
+
+            if (
+                updatedMember.currentSubscription
+            ) {
+                break;
+            }
+        }
+    } catch (err) {
+        console.error(err);
+
+        setError(
+            err.message ||
+            "Failed to start subscription."
+        );
+    } finally {
+        setStartingSubscription(false);
+    }
+};
+
+// -----------------------------
+// Loading / not found
+// -----------------------------
 
 if (loading) {
     return <p>Loading member...</p>;
@@ -239,6 +376,10 @@ return (
         <h1>Member Details</h1>
 
         {error && <p>{error}</p>}
+
+        {/* -------------------------------- */}
+        {/* Personal Information */}
+        {/* -------------------------------- */}
 
         <section>
             <h2>Personal Information</h2>
@@ -351,6 +492,10 @@ return (
             )}
         </section>
 
+        {/* -------------------------------- */}
+        {/* Membership Information */}
+        {/* -------------------------------- */}
+
         <section>
             <h2>Membership Information</h2>
 
@@ -361,7 +506,9 @@ return (
 
             <p>
                 <strong>Status:</strong>{" "}
-                {member.active ? "Active" : "Inactive"}
+                {member.active
+                    ? "Active"
+                    : "Inactive"}
             </p>
 
             <p>
@@ -381,6 +528,10 @@ return (
             )}
         </section>
 
+        {/* -------------------------------- */}
+        {/* Current Subscription */}
+        {/* -------------------------------- */}
+
         <section>
             <h2>Current Subscription</h2>
 
@@ -388,11 +539,16 @@ return (
                 <div>
                     <p>
                         <strong>Tier:</strong>{" "}
-                        {member.currentSubscription.tier}
+                        {
+                            member.currentSubscription
+                                .tier
+                        }
                     </p>
 
                     <p>
-                        <strong>Payment status:</strong>{" "}
+                        <strong>
+                            Payment status:
+                        </strong>{" "}
                         {
                             member.currentSubscription
                                 .paymentStatus
@@ -439,7 +595,8 @@ return (
                                 Payment reference:
                             </strong>{" "}
                             {
-                                member.currentSubscription
+                                member
+                                    .currentSubscription
                                     .paymentReference
                             }
                         </p>
@@ -449,6 +606,10 @@ return (
                 <p>No active subscription.</p>
             )}
         </section>
+
+        {/* -------------------------------- */}
+        {/* Subscription History */}
+        {/* -------------------------------- */}
 
         <section>
             <h2>Subscription History</h2>
@@ -463,30 +624,40 @@ return (
                             }
                         >
                             <p>
-                                <strong>Tier:</strong>{" "}
+                                <strong>
+                                    Tier:
+                                </strong>{" "}
                                 {subscription.tier}
                             </p>
 
                             <p>
-                                <strong>Starts:</strong>{" "}
+                                <strong>
+                                    Starts:
+                                </strong>{" "}
                                 {new Date(
                                     subscription.startsAt
                                 ).toLocaleString()}
                             </p>
 
                             <p>
-                                <strong>Ends:</strong>{" "}
+                                <strong>
+                                    Ends:
+                                </strong>{" "}
                                 {new Date(
                                     subscription.endsAt
                                 ).toLocaleString()}
                             </p>
 
                             <p>
-                                <strong>Amount:</strong>{" "}
+                                <strong>
+                                    Amount:
+                                </strong>{" "}
                                 {
                                     subscription.amountPaid
                                 }{" "}
-                                {subscription.currency}
+                                {
+                                    subscription.currency
+                                }
                             </p>
 
                             <hr />
@@ -494,27 +665,149 @@ return (
                     )
                 )
             ) : (
-                <p>No subscription history.</p>
+                <p>
+                    No subscription history.
+                </p>
             )}
         </section>
+
+        {/* -------------------------------- */}
+        {/* Subscription Actions */}
+        {/* -------------------------------- */}
 
         <section>
             <h2>Subscription Actions</h2>
 
-            <Link
-                to={`/members/${member.memberId}/subscriptions/start`}
+            <button
+                type="button"
+                onClick={openSubscriptionModal}
             >
                 Start Subscription
-            </Link>
-
-            {" "}
-
-            <Link
-                to={`/members/${member.memberId}/subscriptions/renew`}
-            >
-                Renew Subscription
-            </Link>
+            </button>
         </section>
+
+        {/* -------------------------------- */}
+        {/* Start Subscription Modal */}
+        {/* -------------------------------- */}
+
+        {showSubscriptionModal && (
+            <div
+                style={{
+                    position: "fixed",
+                    inset: 0,
+                    backgroundColor:
+                        "rgba(0, 0, 0, 0.5)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    zIndex: 1000,
+                }}
+                onClick={closeSubscriptionModal}
+            >
+                <div
+                    style={{
+                        backgroundColor: "white",
+                        padding: "24px",
+                        borderRadius: "8px",
+                        minWidth: "400px",
+                        maxWidth: "90%",
+                    }}
+                    onClick={(e) =>
+                        e.stopPropagation()
+                    }
+                >
+                    <h2>Start Subscription</h2>
+
+                    {/* Tier */}
+
+                    <div>
+                        <label htmlFor="tier">
+                            Tier
+                        </label>
+
+                        <select
+                            id="tier"
+                            name="tier"
+                            value={
+                                subscriptionForm.tier
+                            }
+                            onChange={
+                                handleSubscriptionChange
+                            }
+                            disabled={
+                                startingSubscription
+                            }
+                        >
+                            <option value="THREE_MONTHS">
+                                3 Months
+                            </option>
+
+                            <option value="SIX_MONTHS">
+                                6 Months
+                            </option>
+
+                            <option value="TWELVE_MONTHS">
+                                12 Months
+                            </option>
+                        </select>
+                    </div>
+
+                    {/* Starts At */}
+
+                    <div>
+                        <label htmlFor="startsAt">
+                            Starts at
+                        </label>
+
+                        <input
+                            id="startsAt"
+                            name="startsAt"
+                            type="datetime-local"
+                            value={
+                                subscriptionForm.startsAt
+                            }
+                            onChange={
+                                handleSubscriptionChange
+                            }
+                            disabled={
+                                startingSubscription
+                            }
+                            required
+                        />
+                    </div>
+
+                    {/* Buttons */}
+
+                    <div>
+                        <button
+                            type="button"
+                            onClick={
+                                closeSubscriptionModal
+                            }
+                            disabled={
+                                startingSubscription
+                            }
+                        >
+                            Cancel
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={
+                                handleStartSubscription
+                            }
+                            disabled={
+                                startingSubscription
+                            }
+                        >
+                            {startingSubscription
+                                ? "Starting..."
+                                : "Start Subscription"}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
     </div>
 );
 }

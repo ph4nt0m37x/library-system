@@ -24,8 +24,8 @@ services:
   membership-service-app:
     build:
       context: .
-    hostname: membership-service_app
-    container_name: membership-service_app
+    hostname: membership-service-app
+    container_name: membership-service-app
     restart: unless-stopped
     depends_on:
       mysqldb:

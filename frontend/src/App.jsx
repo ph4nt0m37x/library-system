@@ -14,8 +14,6 @@ import CategoriesPage from "./pages/CategoriesPage";
 import BookDetailsPage from "./pages/BookDetailsPage";
 import RegisterMemberPage from "./pages/RegisterMemberPage";
 import MemberDetailsPage from "./pages/MemberDetailsPage.jsx";
-import StartSubscriptionPage from "./pages/StartSubscriptionPage";
-
 function App() {
   return (
     <BrowserRouter>
@@ -34,7 +32,6 @@ function App() {
         <Route path="/books/:id" element={<BookDetailsPage />} />
         <Route path="/members/register" element={<RegisterMemberPage />} />
         <Route path="/members/:id" element={<MemberDetailsPage />} />
-        <Route path="/members/:id/subscriptions/start" element={<StartSubscriptionPage />}/>
       </Routes>
     </BrowserRouter>
   );
