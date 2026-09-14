@@ -91,7 +91,7 @@ class Library() : LabeledEntity {
         val address = LibraryAddress.of(command.address)
 
         val event = LibraryCreatedEvent(
-            id = LibraryId(),
+            id = command.id,
             name = name.value,
             address = address.value
         )

@@ -1,7 +1,6 @@
 package com.catalogservice.model.valueObject
 
 import com.catalogservice.model.common.Identifier
-import com.catalogservice.model.aggregate.Book
 import jakarta.persistence.Embeddable
 import java.util.UUID
 

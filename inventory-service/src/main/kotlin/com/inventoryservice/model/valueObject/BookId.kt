@@ -2,43 +2,34 @@ package com.inventoryservice.model.valueObject
 
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonValue
-import jakarta.persistence.Column
+import com.inventoryservice.model.common.Identifier
 import jakarta.persistence.Embeddable
-import java.io.Serializable
 import java.util.UUID
 
 @Embeddable
-open class BookId @JsonCreator(mode = JsonCreator.Mode.DELEGATING) constructor(rawValue: String) : Serializable {
-
+open class BookId(
     @get:JsonValue
-    @Column(name = "value", nullable = false)
-    val value: String = normalize(rawValue)
+    override val value: String
+) : Identifier<BookId>(value, BookId::class.java) {
 
-    fun baseValue(): String = value.removePrefix("BookId:")
+    constructor() : this(UUID.randomUUID().toString())
 
-    override fun equals(other: Any?): Boolean =
-        this === other || other is BookId && value == other.value
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other?.javaClass != javaClass) return false
 
-    override fun hashCode(): Int = value.hashCode()
+        return this.value == (other as BookId).value
+    }
 
-    override fun toString(): String = value
+    override fun hashCode(): Int {
+        return value.hashCode()
+    }
 
     companion object {
-        private fun normalize(value: String): String {
-            val rawId = value.trim().removePrefix("BookId:")
-            require(rawId.isNotBlank()) { "Book ID must not be blank" }
-
-            val uuid = try {
-                UUID.fromString(rawId)
-            } catch (_: IllegalArgumentException) {
-                throw IllegalArgumentException("Book ID must be a valid UUID")
-            }
-
-            require(uuid.toString().equals(rawId, ignoreCase = true)) {
-                "Book ID must be a valid UUID"
-            }
-
-            return "BookId:$uuid"
+        @JvmStatic
+        @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
+        fun fromJson(value: String): BookId {
+            return BookId(value)
         }
     }
 }

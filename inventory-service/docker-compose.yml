@@ -21,11 +21,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-  inventory_service_app:
+  inventory-service-app:
     build:
       context: .
-    hostname: inventory_service_app
-    container_name: inventory_service_app
+    hostname: inventory-service-app
+    container_name: inventory-service-app
     depends_on:
       mysqldb:
         condition: service_healthy

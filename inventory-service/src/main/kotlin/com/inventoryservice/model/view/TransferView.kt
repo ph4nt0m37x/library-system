@@ -27,14 +27,14 @@ data class TransferView(
 ) {
     companion object {
         fun from(transfer: Transfer): TransferView {
-            val workflowId = transfer.id().baseValue()
+            val workflowId = transfer.id().value
 
             return TransferView(
                 id = workflowId,
                 status = transfer.status(),
-                sourceLibraryId = transfer.sourceLibraryId().baseValue(),
-                destinationLibraryId = transfer.destinationLibraryId().baseValue(),
-                titleId = transfer.bookId().baseValue(),
+                sourceLibraryId = transfer.sourceLibraryId().value,
+                destinationLibraryId = transfer.destinationLibraryId().value,
+                titleId = transfer.bookId().value,
                 quantity = transfer.quantity(),
                 requestedBy = transfer.requestedBy(),
                 reviewedBy = transfer.reviewedBy(),

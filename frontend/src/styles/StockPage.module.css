@@ -1,0 +1,512 @@
+/* =========================
+   PAGE
+   ========================= */
+
+.page {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 40px 24px;
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+    color: #111827;
+    background: #ffffff;
+}
+
+/* Universal dark-text safety net */
+.page h1,
+.page h2,
+.page h3,
+.page p,
+.page span,
+.page label,
+.page div,
+.page td,
+.page th {
+    color: #111827;
+}
+
+/* =========================
+   HEADER
+   ========================= */
+
+.header {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: start;
+    margin-bottom: 30px;
+    gap: 16px;
+}
+
+.header > div {
+    grid-column: 2;
+    text-align: center;
+}
+
+.header > button {
+    grid-column: 3;
+    justify-self: end;
+}
+
+.title {
+    margin: 0;
+    font-size: 2.25rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #0f172a;
+}
+
+.subtitle {
+    margin-top: 8px;
+    color: #4b5563;
+    font-size: 1rem;
+}
+
+/* =========================
+   BUTTONS
+   ========================= */
+
+.primaryButton {
+    border: none;
+    border-radius: 10px;
+    padding: 11px 18px;
+    background: #111827;
+    color: #ffffff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.05s ease;
+}
+
+.primaryButton:hover:not(:disabled) { background: #1f2937; }
+.primaryButton:active:not(:disabled) { transform: scale(0.98); }
+.primaryButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.secondaryButton {
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    padding: 11px 18px;
+    background: #ffffff;
+    color: #111827;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.secondaryButton:hover:not(:disabled) {
+    background: #f9fafb;
+    border-color: #9ca3af;
+}
+
+.secondaryButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* =========================
+   ROW ACTION BUTTONS
+   ========================= */
+
+.rowActions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.rowButton,
+.rowButtonDark,
+.rowButtonDanger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    height: 34px;
+    padding: 0 14px;
+
+    border-radius: 8px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    font-family: inherit;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.rowButton {
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: #111827;
+}
+
+.rowButton:hover:not(:disabled) {
+    background: #f9fafb;
+    border-color: #9ca3af;
+}
+
+.rowButton:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.rowButtonDark {
+    border: none;
+    background: #111827;
+    color: #ffffff;
+}
+
+.rowButtonDark:hover { background: #1f2937; }
+
+.rowButtonDanger {
+    border: none;
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.rowButtonDanger:hover:not(:disabled) { background: #fee2e2; }
+
+.rowButtonDanger:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* =========================
+   ERROR
+   ========================= */
+
+.error {
+    color: #b91c1c;
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    border-radius: 8px;
+    padding: 12px 15px;
+    margin-bottom: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* =========================
+   LIBRARY SELECTOR
+   ========================= */
+
+.librarySelector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.librarySelector label {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.librarySelect {
+    min-width: 240px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    padding: 10px 14px;
+    background: #ffffff;
+    color: #111827;
+    font-size: 0.9375rem;
+    font-family: inherit;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.librarySelect:focus {
+    border-color: #111827;
+    box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+}
+
+/* =========================
+   TABLE
+   ========================= */
+
+.tableWrap {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.04);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+    table-layout: fixed;
+}
+
+/*
+ * 7 columns, percentages must total 100%:
+ *   1. Book       → 26%
+ *   2. Author     → 18%
+ *   3. ISBN       → 16%   (wide enough for a full 13-digit ISBN)
+ *   4. Total      → 80px
+ *   5. Available  → 80px
+ *   6. Borrowed   → 80px
+ *   7. Actions    → 280px
+ */
+.table th:nth-child(1),
+.table td:nth-child(1) { width: 26%; }
+
+.table th:nth-child(2),
+.table td:nth-child(2) { width: 18%; }
+
+.table th:nth-child(3),
+.table td:nth-child(3) { width: 16%; }
+
+.table th:nth-child(4),
+.table td:nth-child(4),
+.table th:nth-child(5),
+.table td:nth-child(5),
+.table th:nth-child(6),
+.table td:nth-child(6) { width: 80px; }
+
+.table th:nth-child(7),
+.table td:nth-child(7) { width: 280px; }
+
+.table thead {
+    background: #f9fafb;
+}
+
+.table th {
+    text-align: left;
+    padding: 14px 16px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #4b5563;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap;
+}
+
+.table th.center { text-align: center; }
+
+.table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f3f4f6;
+    color: #111827;
+    vertical-align: middle;
+
+    /* No overflow hidden, no ellipsis — let content be fully visible */
+    word-break: break-word;
+}
+
+.table tbody tr:last-child td { border-bottom: none; }
+
+.table tbody tr {
+    transition: background 0.12s ease;
+}
+
+.table tbody tr:hover {
+    background: #f9fafb;
+}
+
+.table td.center { text-align: center; }
+
+/* Buttons stick to the top of the cell when a book title wraps */
+.table td:nth-child(7) {
+    vertical-align: top;
+    padding-top: 14px;
+}
+
+.bookLink {
+    color: #111827;
+    font-weight: 600;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.15s ease;
+}
+
+.bookLink:hover {
+    border-bottom-color: #111827;
+}
+
+.muted { color: #9ca3af; }
+
+/* =========================
+   EMPTY STATE
+   ========================= */
+
+.emptyState {
+    text-align: center;
+    padding: 60px 20px;
+    color: #4b5563;
+    background: #f9fafb;
+    border: 1px dashed #e5e7eb;
+    border-radius: 14px;
+}
+
+.emptyState h2 {
+    margin: 0 0 8px;
+    color: #0f172a;
+    font-size: 1.25rem;
+}
+
+/* =========================
+   MODAL
+   ========================= */
+
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 24, 39, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+}
+
+.modal {
+    background: #ffffff;
+    padding: 28px;
+    border-radius: 16px;
+    width: 520px;
+    max-width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.modalSmall {
+    width: 380px;
+}
+
+.modalTitle {
+    margin: 0 0 20px;
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+/* =========================
+   FORM ELEMENTS (modal)
+   ========================= */
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-bottom: 16px;
+}
+
+.field label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.input {
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.9375rem;
+    font-family: inherit;
+    outline: none;
+    background: #ffffff;
+    color: #111827;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.input::placeholder { color: #9ca3af; }
+
+.input:focus {
+    border-color: #111827;
+    box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+}
+
+/* =========================
+   BOOK PICKER (inside modal)
+   ========================= */
+
+.bookList {
+    max-height: 260px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    background: #ffffff;
+}
+
+.bookListEmpty {
+    padding: 14px 16px;
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.bookItem {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 12px 14px;
+    border: none;
+    border-bottom: 1px solid #f3f4f6;
+    background: #ffffff;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9375rem;
+    color: #111827;
+    transition: background 0.12s ease;
+}
+
+.bookItem:last-child { border-bottom: none; }
+
+.bookItem:hover { background: #f9fafb; }
+
+.bookItemSelected {
+    background: #f3f4f6;
+}
+
+.bookItem strong {
+    color: #0f172a;
+    font-size: 1rem;
+}
+
+.bookItemAuthor {
+    color: #4b5563;
+    font-size: 0.875rem;
+}
+
+.bookItemIsbn {
+    color: #9ca3af;
+    font-size: 0.75rem;
+}
+
+.selectedBook {
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #f9fafb;
+    font-size: 0.9375rem;
+}
+
+.selectedBook strong {
+    color: #0f172a;
+}
+
+/* =========================
+   MODAL ACTIONS
+   ========================= */
+
+.modalActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}

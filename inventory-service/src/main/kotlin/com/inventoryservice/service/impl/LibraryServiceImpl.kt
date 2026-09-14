@@ -36,7 +36,7 @@ class LibraryServiceImpl(
         val address = LibraryAddress.of(command.address).value
         requireUniqueNameAndAddress(name, address)
         return commandGateway.send<Any?>(command)
-            .thenApply { LibraryCreatedResponse(command.id.baseValue()) }
+            .thenApply { LibraryCreatedResponse(command.id.value) }
     }
 
     override fun updateLibrary(
@@ -60,7 +60,7 @@ class LibraryServiceImpl(
         command: AddBookStockCommand
     ): CompletableFuture<Void> {
         validateLibrary(command.libraryId)
-        catalogBookPolicy.requireActive(command.bookId.baseValue())
+        catalogBookPolicy.requireActive(command.bookId.value)
         return sendWithoutResult(command)
     }
 
