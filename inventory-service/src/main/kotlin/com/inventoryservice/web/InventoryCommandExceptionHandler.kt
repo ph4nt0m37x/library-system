@@ -51,8 +51,15 @@ class InventoryCommandExceptionHandler {
                 conflict(illegalState.message)
             illegalArgument != null ->
                 problem(HttpStatus.BAD_REQUEST, "INVALID_ARGUMENT", illegalArgument.message)
-            else ->
-                problem(HttpStatus.INTERNAL_SERVER_ERROR, "COMMAND_FAILED", "The command could not be completed.")
+            else -> {
+                exception.printStackTrace()
+
+                problem(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "COMMAND_FAILED",
+                    exception.cause?.message ?: exception.message ?: "The command could not be completed."
+                )
+            }
         }
     }
 
