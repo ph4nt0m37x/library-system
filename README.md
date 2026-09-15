@@ -13,7 +13,7 @@ Manages the library's book catalog.
 * Search books by title or author
 * View book details and prices
 
-### 🏢 Inventory Service
+### Inventory Service
 
 Manages books available at each library branch.
 
