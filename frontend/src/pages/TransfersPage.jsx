@@ -1,110 +1,235 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import keycloak from "../keycloak";
+import styles from "../styles/TransfersPage.module.css";
+
+const API = "http://localhost:8000";
 
 function TransfersPage() {
-  const [transfers, setTransfers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+    const [transfers, setTransfers] = useState([]);
+    const [libraries, setLibraries] = useState({});
+    const [books, setBooks] = useState({});
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
-  useEffect(() => {
-    const loadTransfers = async () => {
-      try {
-        const response = await fetch(
-          "http://localhost:8000/api/transfers",
-          {
-            headers: {
-              Authorization: `Bearer ${keycloak.token}`,
-            },
-          }
-        );
+    const getId = (value) => {
+        if (!value) return null;
 
-        if (!response.ok) {
-          throw new Error(
-            `Failed to fetch transfers: ${response.status}`
-          );
+        if (typeof value === "string") {
+            return value;
         }
 
-        const data = await response.json();
-
-        console.log("Transfers:", data);
-        setTransfers(data);
-      } catch (error) {
-        console.error(error);
-        setError("Could not load transfers.");
-      } finally {
-        setLoading(false);
-      }
+        return value.value ?? value.id ?? null;
     };
 
-    loadTransfers();
-  }, []);
+    const getStatusClass = (status) => {
+        switch ((status ?? "").toLowerCase()) {
+            case "pending":
+                return styles.statusPending;
+            case "approved":
+                return styles.statusApproved;
+            case "completed":
+                return styles.statusCompleted;
+            case "rejected":
+                return styles.statusRejected;
+            default:
+                return styles.statusDefault;
+        }
+    };
 
-  if (loading) {
-    return <p>Loading transfers...</p>;
-  }
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                const headers = {
+                    Authorization: `Bearer ${keycloak.token}`,
+                };
 
-  if (error) {
-    return <p>{error}</p>;
-  }
+                const [transfersResponse, librariesResponse, booksResponse] =
+                    await Promise.all([
+                        fetch(`${API}/api/transfers`, { headers }),
+                        fetch(`${API}/api/libraries/available`, { headers }),
+                        fetch(`${API}/api/books/available`, { headers }),
+                    ]);
 
-  return (
-    <div>
-      <h1>Book Requests</h1>
+                if (!transfersResponse.ok) {
+                    throw new Error(
+                        `Failed to fetch transfers: ${transfersResponse.status}`
+                    );
+                }
 
-      <p>Request copies from a library through that book's stock row.</p>
+                if (!librariesResponse.ok) {
+                    throw new Error(
+                        `Failed to fetch libraries: ${librariesResponse.status}`
+                    );
+                }
 
-      {transfers.length === 0 ? (
-        <p>No book requests found.</p>
-      ) : (
-        <div>
-          {transfers.map((transfer) => (
-            <div
-              key={
-                transfer.id?.value ??
-                transfer.id?.id ??
-                transfer.id
-              }
-            >
-              <h2>
-                Book Request{" "}
-                {transfer.id?.value ??
-                  transfer.id?.id ??
-                  transfer.id}
-              </h2>
+                if (!booksResponse.ok) {
+                    throw new Error(
+                        `Failed to fetch books: ${booksResponse.status}`
+                    );
+                }
 
-              <p>
-                Book ID: {transfer.titleId}
-              </p>
+                const transfersData = await transfersResponse.json();
+                const librariesData = await librariesResponse.json();
+                const booksData = await booksResponse.json();
 
-              <p>
-                Supplying Library:{" "}
-                {transfer.sourceLibraryId?.value ??
-                  transfer.sourceLibraryId?.id ??
-                  transfer.sourceLibraryId}
-              </p>
+                // Map library ID -> library
+                const libraryMap = {};
 
-              <p>
-                Requesting Library:{" "}
-                {transfer.destinationLibraryId?.value ??
-                  transfer.destinationLibraryId?.id ??
-                  transfer.destinationLibraryId}
-              </p>
+                librariesData.forEach((library) => {
+                    const id = getId(library.id);
 
-              <p>
-                Status: {transfer.status}
-              </p>
+                    if (id) {
+                        libraryMap[id] = library;
+                    }
+                });
 
-              <p>
-                Requested By: {transfer.requestedBy}
-              </p>
+                // Map book ID -> book
+                const bookMap = {};
 
-              <hr />
+                booksData.forEach((book) => {
+                    const id = getId(book.id);
+
+                    if (id) {
+                        bookMap[id] = book;
+                    }
+                });
+
+                setTransfers(transfersData);
+                setLibraries(libraryMap);
+                setBooks(bookMap);
+            } catch (error) {
+                console.error(error);
+                setError("Could not load book requests.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadData();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className={styles.page}>
+                <div className={styles.emptyState}>
+                    <h2>Loading transfers…</h2>
+                </div>
             </div>
-          ))}
+        );
+    }
+
+    return (
+        <div className={styles.page}>
+            <div className={styles.header}>
+                <h1 className={styles.title}>Book Requests</h1>
+
+                <p className={styles.subtitle}>
+                    Request copies from a library through that book's stock row.
+                </p>
+            </div>
+
+            {error && <div className={styles.error}>{error}</div>}
+
+            {transfers.length === 0 ? (
+                <div className={styles.emptyState}>
+                    <h2>No book requests found</h2>
+                    <p>
+                        When you request a book from another library, it'll show up here.
+                    </p>
+                </div>
+            ) : (
+                <div className={styles.grid}>
+                    {transfers.map((transfer, index) => {
+                        const sourceLibraryId = getId(transfer.sourceLibraryId);
+                        const destinationLibraryId = getId(
+                            transfer.destinationLibraryId
+                        );
+
+                        const bookId = getId(transfer.titleId);
+
+                        const sourceLibrary = libraries[sourceLibraryId];
+                        const destinationLibrary = libraries[destinationLibraryId];
+                        const book = books[bookId];
+
+                        return (
+                            <div key={index} className={styles.card}>
+                                <div className={styles.cardHeader}>
+                                    <h2 className={styles.cardTitle}>
+                                        Book Request
+                                    </h2>
+
+                                    <span
+                                        className={`${styles.status} ${getStatusClass(
+                                            transfer.status
+                                        )}`}
+                                    >
+                    {transfer.status ?? "unknown"}
+                  </span>
+                                </div>
+
+                                <div className={styles.details}>
+                                    {/* Book — full width */}
+                                    <div className={styles.detailRow}>
+                    <span className={styles.detailLabel}>
+                      Book
+                    </span>
+
+                                        {book ? (
+                                            <Link
+                                                to={`/books/${bookId}`}
+                                                className={styles.bookLink}
+                                            >
+                                                {book.title}
+                                            </Link>
+                                        ) : (
+                                            <span className={styles.detailValue}>
+                        {transfer.title ?? "Unknown book"}
+                      </span>
+                                        )}
+                                    </div>
+
+                                    {/* Supplying + Requesting side-by-side */}
+                                    <div className={styles.libraryRow}>
+                                        <div className={styles.detailRow}>
+                      <span className={styles.detailLabel}>
+                        Supplying Library
+                      </span>
+
+                                            <span className={styles.detailValue}>
+                        {sourceLibrary?.name ?? "Unknown library"}
+                      </span>
+                                        </div>
+
+                                        <div className={styles.detailRow}>
+                      <span className={styles.detailLabel}>
+                        Requesting Library
+                      </span>
+
+                                            <span className={styles.detailValue}>
+                        {destinationLibrary?.name ?? "Unknown library"}
+                      </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Requested By — pinned bottom-left */}
+                                    <div className={styles.requestedBy}>
+                    <span className={styles.detailLabel}>
+                      Requested By
+                    </span>
+
+                                        <span className={styles.detailValue}>
+                      {transfer.requestedBy ?? "—"}
+                    </span>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
         </div>
-      )}
-    </div>
-  );
+    );
 }
 
 export default TransfersPage;
