@@ -3,6 +3,36 @@ import { useNavigate, useParams } from "react-router-dom";
 import keycloak from "../keycloak";
 import styles from "../styles/MemberDetailsPage.module.css";
 
+const readValue = (value) => {
+    if (value === null || value === undefined || typeof value !== "object") {
+        return value;
+    }
+
+    return value.value ?? value.id ?? value.name;
+};
+
+const readLoans = (payload) => {
+    const loanItems = [
+        payload,
+        payload?.loans,
+        payload?.content,
+        payload?._embedded?.loans,
+    ].find(Array.isArray);
+
+    if (!loanItems) {
+        throw new Error("The loans response has an unexpected format.");
+    }
+
+    return loanItems.map((loan) => ({
+        ...loan,
+        loanId: readValue(loan.loanId),
+        memberId: readValue(loan.memberId),
+        bookId: readValue(loan.bookId),
+        libraryId: readValue(loan.libraryId),
+        status: readValue(loan.status),
+    }));
+};
+
 function MemberDetailsPage() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -112,10 +142,11 @@ const fetchLoans = async () => {
     }
 
     const data = await response.json();
-    setLoans(data);
+    const memberLoans = readLoans(data);
+    setLoans(memberLoans);
 
     const bookNames = await Promise.all(
-        data.map(async (loan) => {
+        memberLoans.map(async (loan) => {
             try {
                 const bookResponse = await fetch(
                     `http://localhost:8000/api/books/${loan.bookId}`,

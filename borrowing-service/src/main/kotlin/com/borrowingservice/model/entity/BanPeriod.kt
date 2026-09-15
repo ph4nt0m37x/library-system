@@ -9,6 +9,8 @@ import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import org.axonframework.modelling.command.EntityId
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.time.ZonedDateTime
 
 @Entity
@@ -36,6 +38,7 @@ class BanPeriod(
     var triggeringFeeId: String,
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(nullable = false, length = 64, columnDefinition = "varchar(64)")
     var reason: BanReason = BanReason.REPEATED_PERMANENT_BOOK_DAMAGE
 )

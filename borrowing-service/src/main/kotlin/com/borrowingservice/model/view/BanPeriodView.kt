@@ -8,6 +8,8 @@ import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.time.ZonedDateTime
 
 @Entity
@@ -34,6 +36,7 @@ class BanPeriodView(
     var triggeringFeeId: String,
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(nullable = false, length = 64, columnDefinition = "varchar(64)")
     var reason: BanReason
 )
