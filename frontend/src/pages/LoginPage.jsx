@@ -1,36 +1,22 @@
-import { useEffect, useRef } from "react";
-import keycloak from "../keycloak";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { initKeycloak } from "../keycloak";
 
 function LoginPage() {
-    const initialized = useRef(false);
+    const navigate = useNavigate();
 
     useEffect(() => {
-        if (initialized.current) {
-            return;
-        }
-
-        initialized.current = true;
-
-        keycloak
-            .init({
-                onLoad: "login-required",
-                pkceMethod: "S256",
-            })
-            .then((authenticated) => {
-                console.log("Authenticated:", authenticated);
-                console.log("Keycloak token:", keycloak.token);
-
-                localStorage.setItem("token", keycloak.token);
-            })
+        initKeycloak()
+            .then(() => navigate("/dashboard", { replace: true }))
             .catch((error) => {
                 console.error("Keycloak login failed:", error);
             });
-    }, []);
+    }, [navigate]);
 
     return (
         <div>
             <h1>Login</h1>
-            <p>Redirecting to Keycloak...</p>
+            <p>Checking your session...</p>
         </div>
     );
 }

@@ -44,7 +44,7 @@
 
 .headerActions {
     grid-column: 3;
-    justify-self: end;
+    justify-self: center;
     display: flex;
     gap: 10px;
 }

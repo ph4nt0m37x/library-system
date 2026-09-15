@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import keycloak from "../keycloak";
 import styles from "../styles/BooksPage.module.css";
 
@@ -402,26 +402,33 @@ function BooksPage() {
       <div className={styles.page}>
         <div className={styles.header}>
           <div>
-            <h1 className={styles.title}>Books</h1>
+            <h1 className={styles.title}>Book Catalog</h1>
 
             <p className={styles.subtitle}>
               Browse and manage the library catalogue.
             </p>
           </div>
 
-          {!editingBook && (
-              <button
-                  className={styles.primaryButton}
-                  onClick={() =>
-                      setShowForm(!showForm)
-                  }
-              >
-                {showForm
-                    ? "Cancel"
-                    : "+ Add Book"}
-              </button>
-          )}
+          <div className={styles.headerActions}>
+            <button
+                type="button"
+                className={styles.secondaryButton}
+                onClick={() => navigate("/categories")}
+            >
+              Manage Categories
+            </button>
+
+            {!editingBook && (
+                <button
+                    className={styles.primaryButton}
+                    onClick={() => setShowForm(!showForm)}
+                >
+                  {showForm ? "Cancel" : "+ Add Book"}
+                </button>
+            )}
+          </div>
         </div>
+
 
         {/* =========================
           SEARCH & FILTERS
@@ -760,9 +767,12 @@ function BooksPage() {
                     >
                       <div className={styles.bookTop}>
                         <div>
-                          <h2 className={styles.bookTitle}>
+                          <Link
+                              to={`/books/${encodeURIComponent(bookId)}`}
+                              className={styles.bookLink}
+                          >
                             {book.title}
-                          </h2>
+                          </Link>
 
                           <p className={styles.author}>
                             by {book.author}

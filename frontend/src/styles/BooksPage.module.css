@@ -8,11 +8,10 @@
     padding: 40px 24px;
     font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
-    color: #111827;              /* ← forces dark text everywhere by default */
+    color: #111827;
     background: #ffffff;
 }
 
-/* Universal dark-text safety net inside .page */
 .page h1,
 .page h2,
 .page h3,
@@ -25,22 +24,28 @@
 
 .header {
     display: grid;
-    grid-template-columns: 1fr auto 1fr;  /* left spacer | center text | right button */
+    grid-template-columns: 1fr auto 1fr;
     align-items: start;
     margin-bottom: 30px;
     gap: 16px;
 }
 
-/* the middle column: your title + subtitle */
 .header > div {
     grid-column: 2;
     text-align: center;
 }
 
-/* the button: pushed to the right column */
 .header > button {
     grid-column: 3;
     justify-self: end;
+}
+
+.headerActions {
+    grid-column: 3;
+    justify-self: end;
+    display: flex;
+    gap: 16px;
+    align-items: center;
 }
 
 .title {
@@ -53,7 +58,7 @@
 
 .subtitle {
     margin-top: 8px;
-    color: #4b5563;             /* dark gray, not light */
+    color: #4b5563;
     font-size: 1rem;
 }
 
@@ -184,7 +189,7 @@
 .fieldFull label {
     font-size: 0.8125rem;
     font-weight: 600;
-    color: #111827;             /* dark labels */
+    color: #111827;
 }
 
 .field input,
@@ -199,7 +204,7 @@
     outline: none;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
     background: #ffffff;
-    color: #111827;             /* dark typed text */
+    color: #111827;
     resize: vertical;
 }
 
@@ -225,10 +230,8 @@
 
 .editHeader {
     margin-bottom: 20px;
-    text-align: center;         /* ← centered like the card */
+    text-align: center;
 }
-
-/* (idText rule removed — we're deleting the element) */
 
 /* =========================
    BOOK GRID
@@ -257,14 +260,30 @@
     align-items: stretch;
     text-align: center;
 
-    position: relative;      /* ← so z-index works on hover */
+    position: relative;
     z-index: 0;
 }
 
 .bookCard:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-    z-index: 1;              /* ← lifts above neighbors so no visual overlap */
+    z-index: 1;
+}
+
+.bookLink {
+    display: inline-block;
+    font-size: 1.3125rem;
+    line-height: 1.3;
+    font-weight: 700;
+    color: #0f172a;
+    text-align: left;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.bookLink:hover {
+    color: #4b5563;
+    text-decoration: underline;
 }
 
 .description {
@@ -273,29 +292,29 @@
     line-height: 1.55;
     margin: 18px 0;
 
-    height: 4.65em;            /* ≈ 3 lines tall — locked in */
-    overflow: hidden;          /* hide the overflow */
+    height: 4.65em;
+    overflow: hidden;
     display: -webkit-box;
-    -webkit-line-clamp: 3;     /* show max 3 lines, then … */
+    -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
 }
 
 .cardActions {
     display: flex;
     gap: 10px;
-    margin-top: auto;          /* ← the magic: pushes buttons to the bottom */
+    margin-top: auto;
     padding-top: 20px;
     width: 100%;
 }
 
 .bookTop {
     display: flex;
-    justify-content: space-between;   /* ← title block left, badge right */
+    justify-content: space-between;
     align-items: flex-start;
     gap: 15px;
     margin-bottom: 20px;
     width: 100%;
-    text-align: left;                 /* ← back to left-aligned text */
+    text-align: left;
 }
 
 .bookTitle {
@@ -323,7 +342,7 @@
     font-weight: 600;
     color: #374151;
     white-space: nowrap;
-    margin-top: 4px;                  /* tiny nudge so it lines up with the title */
+    margin-top: 4px;
 }
 
 .bookDetails {
@@ -335,12 +354,12 @@
     padding: 15px 0;
     font-size: 0.9375rem;
     width: 100%;
-    text-align: center;         /* ← center each cell */
+    text-align: center;
 }
 
 .detailLabel {
     display: block;
-    color: #6b7280;             /* darker than before, still muted */
+    color: #6b7280;
     font-size: 0.6875rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;

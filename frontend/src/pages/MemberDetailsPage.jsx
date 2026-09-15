@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import keycloak from "../keycloak";
+import styles from "../styles/MemberDetailsPage.module.css";
 
 function MemberDetailsPage() {
     const { id } = useParams();
@@ -799,1037 +800,1286 @@ const handleSubscriptionSubmit = async () => {
 // -----------------------------
 // Loading / not found
 // -----------------------------
+    if (loading) {
+        return (
+            <div className={styles.page}>
+                <div className={styles.loadingWrap}>
+                    Loading member...
+                </div>
+            </div>
+        );
+    }
 
-if (loading) {
-    return <p>Loading member...</p>;
-}
+    if (!member) {
+        return (
+            <div className={styles.page}>
+                <div className={styles.emptyState}>
+                    {error || "Member not found."}
+                </div>
 
-if (!member) {
+                <div style={{ textAlign: "center", marginTop: 20 }}>
+                    <button
+                        type="button"
+                        className={styles.primaryButton}
+                        onClick={() => navigate("/members")}
+                    >
+                        Back to Members
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    const filteredBooks = books.filter((book) => {
+        const search = bookSearch.trim().toLowerCase();
+
+        return (
+            !search ||
+            book.title?.toLowerCase().includes(search) ||
+            book.author?.toLowerCase().includes(search) ||
+            book.isbn?.toLowerCase().includes(search)
+        );
+    });
+
+    const activeLoans = loans.filter(
+        (loan) => loan.status === "ACTIVE"
+    );
+
+    const historicLoans = loans.filter(
+        (loan) => loan.status !== "ACTIVE"
+    );
+
+    const activeLoansCount = activeLoans.length;
+
+    const activeFees = fees.filter((fee) => fee.status === "UNPAID");
+
+    const historicFees = fees.filter((fee) => fee.status === "PAID");
+
+    const historicBans =
+        borrowingBan?.history?.filter(
+            (ban) => ban.banId !== borrowingBan.currentBan?.banId
+        ) || [];
+
     return (
-        <div>
-            <p>{error || "Member not found."}</p>
-
+        <div className={styles.page}>
             <button
                 type="button"
+                className={styles.backButton}
                 onClick={() => navigate("/members")}
             >
-                Back to Members
+                ← Back to Members
             </button>
-        </div>
-    );
-}
 
-const filteredBooks = books.filter((book) => {
-    const search = bookSearch.trim().toLowerCase();
+            <div className={styles.pageHeader}>
+                <h1 className={styles.pageTitle}>
+                    {member.firstName} {member.lastName}
+                </h1>
 
-    return (
-        !search ||
-        book.title?.toLowerCase().includes(search) ||
-        book.author?.toLowerCase().includes(search) ||
-        book.isbn?.toLowerCase().includes(search)
-    );
-});
-
-const activeLoans = loans.filter(
-    (loan) => loan.status === "ACTIVE"
-);
-
-const historicLoans = loans.filter(
-    (loan) => loan.status !== "ACTIVE"
-);
-
-const activeLoansCount = activeLoans.length;
-
-const activeFees = fees.filter((fee) => fee.status === "UNPAID");
-
-const historicFees = fees.filter((fee) => fee.status === "PAID");
-
-const historicBans = borrowingBan?.history?.filter(
-    (ban) => ban.banId !== borrowingBan.currentBan?.banId
-) || [];
-
-return (
-    <div>
-        <button
-            type="button"
-            onClick={() => navigate("/members")}
-        >
-            ← Back to Members
-        </button>
-
-        <h1>Member Details</h1>
-
-        {error && <p>{error}</p>}
-
-        {/* -------------------------------- */}
-        {/* Personal Information */}
-        {/* -------------------------------- */}
-
-        <section>
-            <h2>Personal Information</h2>
-
-            {editing ? (
-                <>
-                    <div>
-                        <label htmlFor="firstName">
-                            First name
-                        </label>
-
-                        <input
-                            id="firstName"
-                            name="firstName"
-                            type="text"
-                            value={form.firstName}
-                            onChange={handleChange}
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <label htmlFor="lastName">
-                            Last name
-                        </label>
-
-                        <input
-                            id="lastName"
-                            name="lastName"
-                            type="text"
-                            value={form.lastName}
-                            onChange={handleChange}
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <label htmlFor="email">
-                            Email
-                        </label>
-
-                        <input
-                            id="email"
-                            name="email"
-                            type="email"
-                            value={form.email}
-                            onChange={handleChange}
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <label htmlFor="phoneNumber">
-                            Phone number
-                        </label>
-
-                        <input
-                            id="phoneNumber"
-                            name="phoneNumber"
-                            type="text"
-                            value={form.phoneNumber}
-                            onChange={handleChange}
-                            required
-                        />
-                    </div>
-
-                    <button
-                        type="button"
-                        onClick={handleCancel}
-                        disabled={saving}
-                    >
-                        Cancel
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={handleSave}
-                        disabled={saving}
-                    >
-                        {saving
-                            ? "Saving..."
-                            : "Save Changes"}
-                    </button>
-                </>
-            ) : (
-                <>
-                    <p>
-                        <strong>Name:</strong>{" "}
-                        {member.firstName}{" "}
-                        {member.lastName}
-                    </p>
-
-                    <p>
-                        <strong>Email:</strong>{" "}
-                        {member.email}
-                    </p>
-
-                    <p>
-                        <strong>Phone:</strong>{" "}
-                        {member.phoneNumber}
-                    </p>
-
-                    <button
-                        type="button"
-                        onClick={handleEdit}
-                    >
-                        Edit
-                    </button>
-                </>
-            )}
-        </section>
-
-        {/* -------------------------------- */}
-        {/* Membership Information */}
-        {/* -------------------------------- */}
-
-        <section>
-            <h2>Membership Information</h2>
-
-            <p>
-                <strong>Membership number:</strong>{" "}
-                {member.membershipNumber}
-            </p>
-
-            <p>
-                <strong>Status:</strong>{" "}
-                {member.active
-                    ? "Active"
-                    : "Inactive"}
-            </p>
-
-            <p>
-                <strong>Registered:</strong>{" "}
-                {new Date(
-                    member.registeredAt
-                ).toLocaleString()}
-            </p>
-
-            {member.changedAt && (
-                <p>
-                    <strong>Last changed:</strong>{" "}
-                    {new Date(
-                        member.changedAt
-                    ).toLocaleString()}
+                <p className={styles.pageSubtitle}>
+                    Membership #{member.membershipNumber}
                 </p>
-            )}
-        </section>
-
-        {/* -------------------------------- */}
-        {/* Loans */}
-        {/* -------------------------------- */}
-
-        <section>
-            <h2>
-                Loans {" "}
-                <span>(Active loans: {activeLoansCount})</span>
-            </h2>
-
-            <button
-                type="button"
-                onClick={openLoanModal}
-            >
-                Add Loan
-            </button>
-
-            {loansLoading ? (
-                <p>Loading loans...</p>
-            ) : loansError ? (
-                <p role="alert">{loansError}</p>
-            ) : activeLoans.length === 0 ? (
-                <p>No active loans for this member.</p>
-            ) : (
-                activeLoans.map((loan) => (
-                    <div key={loan.loanId}>
-                        <p>
-                            <strong>Book:</strong>{" "}
-                            {loanBookNames[loan.bookId] || "Loading..."}
-                        </p>
-
-                        <button
-                            type="button"
-                            onClick={() => navigate(`/loans/${loan.loanId}`)}
-                        >
-                            Details
-                        </button>
-
-                        <hr />
-                    </div>
-                ))
-            )}
-        </section>
-
-        <section>
-            <h2>Loan History</h2>
-
-            {loansLoading ? (
-                <p>Loading loan history...</p>
-            ) : loansError ? (
-                <p role="alert">{loansError}</p>
-            ) : historicLoans.length === 0 ? (
-                <p>No historic loans for this member.</p>
-            ) : (
-                historicLoans.map((loan) => (
-                    <div key={loan.loanId}>
-                        <p>
-                            <strong>Book:</strong>{" "}
-                            {loanBookNames[loan.bookId] || "Loading..."}
-                        </p>
-
-                        <button
-                            type="button"
-                            onClick={() => navigate(`/loans/${loan.loanId}`)}
-                        >
-                            Details
-                        </button>
-
-                        <hr />
-                    </div>
-                ))
-            )}
-        </section>
-
-        <section>
-            <h2>
-                Active Fees {" "}
-                <span>(Active fees: {activeFees.length})</span>
-            </h2>
-
-            <button
-                type="button"
-                onClick={openPaymentQuoteModal}
-                disabled={activeFees.length === 0}
-            >
-                Pay Active Fees
-            </button>
-
-            {feesLoading ? (
-                <p>Loading fees...</p>
-            ) : feesError ? (
-                <p role="alert">{feesError}</p>
-            ) : activeFees.length === 0 ? (
-                <p>No active fees for this member.</p>
-            ) : (
-                activeFees.map((fee) => (
-                    <div key={fee.feeId}>
-                        <p>
-                            <strong>Reason:</strong> {fee.reason}
-                        </p>
-
-                        <p>
-                            <strong>Created:</strong>{" "}
-                            {new Date(fee.createdAt).toLocaleString()}
-                        </p>
-
-                        {fee.dueAt && (
-                            <p>
-                                <strong>Due:</strong>{" "}
-                                {new Date(fee.dueAt).toLocaleString()}
-                            </p>
-                        )}
-
-                        <hr />
-                    </div>
-                ))
-            )}
-        </section>
-
-        <section>
-            <h2>Fee History</h2>
-
-            {feesLoading ? (
-                <p>Loading fee history...</p>
-            ) : feesError ? (
-                <p role="alert">{feesError}</p>
-            ) : historicFees.length === 0 ? (
-                <p>No historic fees for this member.</p>
-            ) : (
-                historicFees.map((fee) => (
-                    <div key={fee.feeId}>
-                        <p>
-                            <strong>Reason:</strong> {fee.reason}
-                        </p>
-
-                        <p>
-                            <strong>Created:</strong>{" "}
-                            {new Date(fee.createdAt).toLocaleString()}
-                        </p>
-
-                        {fee.settledAt && (
-                            <p>
-                                <strong>Settled:</strong>{" "}
-                                {new Date(fee.settledAt).toLocaleString()}
-                            </p>
-                        )}
-
-                        <hr />
-                    </div>
-                ))
-            )}
-        </section>
-
-        <section>
-            <h2>Payment History</h2>
-
-            {paymentsLoading ? (
-                <p>Loading payment history...</p>
-            ) : paymentsError ? (
-                <p role="alert">{paymentsError}</p>
-            ) : payments.length === 0 ? (
-                <p>No payments found for this member.</p>
-            ) : (
-                payments.map((payment) => (
-                    <div key={payment.paymentId}>
-                        <p>
-                            <strong>Total:</strong>{" "}
-                            {payment.amount} {payment.currency}
-                        </p>
-
-                        <p>
-                            <strong>Paid:</strong>{" "}
-                            {new Date(payment.paidAt).toLocaleString()}
-                        </p>
-
-                        <p>
-                            <strong>Fees paid:</strong>{" "}
-                            {payment.allocations?.length || 0}
-                        </p>
-
-                        <hr />
-                    </div>
-                ))
-            )}
-        </section>
-
-        <section>
-            <h2>Active Borrowing Ban</h2>
-
-            {banLoading ? (
-                <p>Loading borrowing-ban information...</p>
-            ) : banError ? (
-                <p role="alert">{banError}</p>
-            ) : borrowingBan?.active && borrowingBan.currentBan ? (
-                <div>
-                    <p>
-                        <strong>Tier:</strong>{" "}
-                        {borrowingBan.currentBan.tier}
-                    </p>
-
-                    <p>
-                        <strong>Reason:</strong>{" "}
-                        {borrowingBan.currentBan.reason}
-                    </p>
-
-                    <p>
-                        <strong>Starts:</strong>{" "}
-                        {new Date(
-                            borrowingBan.currentBan.startsAt
-                        ).toLocaleString()}
-                    </p>
-
-                    <p>
-                        <strong>Ends:</strong>{" "}
-                        {borrowingBan.currentBan.endsAt
-                            ? new Date(
-                                borrowingBan.currentBan.endsAt
-                            ).toLocaleString()
-                            : "Permanent"}
-                    </p>
-                </div>
-            ) : (
-                <p>No active borrowing ban.</p>
-            )}
-        </section>
-
-        <section>
-            <h2>Borrowing Ban History</h2>
-
-            {banLoading ? (
-                <p>Loading borrowing-ban history...</p>
-            ) : banError ? (
-                <p role="alert">{banError}</p>
-            ) : historicBans.length === 0 ? (
-                <p>No historic borrowing bans.</p>
-            ) : (
-                historicBans.map((ban) => (
-                    <div key={ban.banId}>
-                        <p>
-                            <strong>Tier:</strong> {ban.tier}
-                        </p>
-
-                        <p>
-                            <strong>Reason:</strong> {ban.reason}
-                        </p>
-
-                        <p>
-                            <strong>Issued:</strong>{" "}
-                            {new Date(ban.issuedAt).toLocaleString()}
-                        </p>
-
-                        <p>
-                            <strong>Ended:</strong>{" "}
-                            {ban.endsAt
-                                ? new Date(ban.endsAt).toLocaleString()
-                                : "Permanent"}
-                        </p>
-
-                        <hr />
-                    </div>
-                ))
-            )}
-        </section>
-
-        {showPaymentQuoteModal && (
-            <div
-                style={{
-                    position: "fixed",
-                    inset: 0,
-                    backgroundColor: "rgba(0, 0, 0, 0.5)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    zIndex: 1000,
-                }}
-                onClick={closePaymentQuoteModal}
-            >
-                <form
-                    style={{
-                        backgroundColor: "white",
-                        padding: "24px",
-                        borderRadius: "8px",
-                        minWidth: "400px",
-                        maxWidth: "90%",
-                    }}
-                    onClick={(event) => event.stopPropagation()}
-                    onSubmit={handleQuotePayment}
-                >
-                    <h2>Pay Active Fees</h2>
-
-                    <input
-                        type="hidden"
-                        name="memberId"
-                        value={member.memberId}
-                    />
-
-                    {paymentQuoteError && (
-                        <p role="alert">{paymentQuoteError}</p>
-                    )}
-
-                    {paymentQuote ? (
-                        <div>
-                            <p>Payment recorded successfully.</p>
-
-                            <p>
-                                <strong>Total:</strong>{" "}
-                                {paymentQuote.amount} {paymentQuote.currency}
-                            </p>
-
-                            <p>
-                                <strong>Payment ID:</strong>{" "}
-                                {paymentQuote.paymentId}
-                            </p>
-
-                            <h3>Fee allocations</h3>
-
-                            {paymentQuote.fees.map((fee) => (
-                                <p key={fee.feeId}>
-                                    {fee.amount} {paymentQuote.currency}
-                                </p>
-                            ))}
-                        </div>
-                    ) : (
-                        <>
-                            <p>Select the unpaid fees to pay.</p>
-
-                            {activeFees.map((fee) => (
-                                <div key={fee.feeId}>
-                                    <label>
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedFeeIds.includes(fee.feeId)}
-                                            onChange={() =>
-                                                toggleFeeSelection(fee.feeId)
-                                            }
-                                            disabled={quotingPayment}
-                                        />
-                                        {" "}
-                                        {fee.reason} — created {new Date(
-                                            fee.createdAt
-                                        ).toLocaleDateString()}
-                                    </label>
-                                </div>
-                            ))}
-                        </>
-                    )}
-
-                    <div>
-                        <button
-                            type="button"
-                            onClick={closePaymentQuoteModal}
-                            disabled={quotingPayment}
-                        >
-                            Close
-                        </button>
-
-                        {!paymentQuote && (
-                            <button
-                                type="submit"
-                                disabled={quotingPayment}
-                            >
-                                {quotingPayment
-                                    ? "Processing payment..."
-                                    : "Pay Selected Fees"}
-                            </button>
-                        )}
-                    </div>
-                </form>
             </div>
-        )}
 
-        {showLoanModal && (
-            <div
-                style={{
-                    position: "fixed",
-                    inset: 0,
-                    backgroundColor: "rgba(0, 0, 0, 0.5)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    zIndex: 1000,
-                }}
-                onClick={closeLoanModal}
-            >
-                <form
-                    style={{
-                        backgroundColor: "white",
-                        padding: "24px",
-                        borderRadius: "8px",
-                        minWidth: "400px",
-                        maxWidth: "90%",
-                    }}
-                    onClick={(event) => event.stopPropagation()}
-                    onSubmit={handleCreateLoan}
-                >
-                    <h2>Add Loan</h2>
+            {error && <div className={styles.error}>{error}</div>}
 
-                    <input
-                        type="hidden"
-                        name="memberId"
-                        value={member.memberId}
-                    />
+            {/* -------------------------------- */}
+            {/* Personal Information */}
+            {/* -------------------------------- */}
 
-                    <input
-                        type="hidden"
-                        name="idempotencyKey"
-                        value={loanIdempotencyKey}
-                    />
+            <section className={styles.section}>
+                <div className={styles.sectionHeader}>
+                    <h2 className={styles.sectionTitle}>
+                        Personal Information
+                    </h2>
 
-                    {loanError && (
-                        <p role="alert">{loanError}</p>
+                    {!editing && (
+                        <button
+                            type="button"
+                            className={styles.secondaryButton}
+                            onClick={handleEdit}
+                        >
+                            Edit
+                        </button>
                     )}
+                </div>
 
-                    {loanOptionsLoading ? (
-                        <p>Loading libraries and books...</p>
-                    ) : (
-                        <>
-                            <div>
-                                <label htmlFor="loanLibrary">
-                                    Library
+                {editing ? (
+                    <>
+                        <div className={styles.formGrid}>
+                            <div className={styles.field}>
+                                <label htmlFor="firstName">
+                                    First name
                                 </label>
-
-                                <select
-                                    id="loanLibrary"
-                                    value={loanForm.libraryId}
-                                    onChange={(event) =>
-                                        setLoanForm((previous) => ({
-                                            ...previous,
-                                            libraryId: event.target.value,
-                                        }))
-                                    }
-                                    disabled={creatingLoan}
-                                    required
-                                >
-                                    <option value="">
-                                        Select a library
-                                    </option>
-
-                                    {libraries.map((library) => (
-                                        <option
-                                            key={getResourceId(library)}
-                                            value={getResourceId(library)}
-                                        >
-                                            {library.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label htmlFor="bookSearch">
-                                    Search books
-                                </label>
-
                                 <input
-                                    id="bookSearch"
-                                    type="search"
-                                    value={bookSearch}
-                                    onChange={(event) =>
-                                        setBookSearch(event.target.value)
-                                    }
-                                    placeholder="Title, author, or ISBN"
-                                    disabled={creatingLoan}
+                                    id="firstName"
+                                    name="firstName"
+                                    type="text"
+                                    value={form.firstName}
+                                    onChange={handleChange}
+                                    required
                                 />
                             </div>
 
-                            <div>
-                                <label htmlFor="loanBook">
-                                    Book
+                            <div className={styles.field}>
+                                <label htmlFor="lastName">
+                                    Last name
                                 </label>
-
-                                <select
-                                    id="loanBook"
-                                    value={loanForm.bookId}
-                                    onChange={(event) =>
-                                        setLoanForm((previous) => ({
-                                            ...previous,
-                                            bookId: event.target.value,
-                                        }))
-                                    }
-                                    disabled={creatingLoan}
+                                <input
+                                    id="lastName"
+                                    name="lastName"
+                                    type="text"
+                                    value={form.lastName}
+                                    onChange={handleChange}
                                     required
-                                >
-                                    <option value="">
-                                        Select a book
-                                    </option>
-
-                                    {filteredBooks.map((book) => (
-                                        <option
-                                            key={getResourceId(book)}
-                                            value={getResourceId(book)}
-                                        >
-                                            {book.title} — {book.author} ({book.isbn})
-                                        </option>
-                                    ))}
-                                </select>
+                                />
                             </div>
-                        </>
-                    )}
 
-                    <div>
-                        <button
-                            type="button"
-                            onClick={closeLoanModal}
-                            disabled={creatingLoan}
-                        >
-                            Cancel
-                        </button>
+                            <div className={styles.field}>
+                                <label htmlFor="email">Email</label>
+                                <input
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    value={form.email}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
 
-                        <button
-                            type="submit"
-                            disabled={loanOptionsLoading || creatingLoan}
-                        >
-                            {creatingLoan ? "Adding..." : "Add Loan"}
-                        </button>
+                            <div className={styles.field}>
+                                <label htmlFor="phoneNumber">
+                                    Phone number
+                                </label>
+                                <input
+                                    id="phoneNumber"
+                                    name="phoneNumber"
+                                    type="text"
+                                    value={form.phoneNumber}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div className={styles.formActions}>
+                            <button
+                                type="button"
+                                className={styles.secondaryButton}
+                                onClick={handleCancel}
+                                disabled={saving}
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                type="button"
+                                className={styles.primaryButton}
+                                onClick={handleSave}
+                                disabled={saving}
+                            >
+                                {saving ? "Saving..." : "Save Changes"}
+                            </button>
+                        </div>
+                    </>
+                ) : (
+                    <div className={styles.infoGrid}>
+                        <div className={styles.infoItem}>
+                            <span className={styles.infoLabel}>
+                                Name
+                            </span>
+                            <span className={styles.infoValue}>
+                                {member.firstName} {member.lastName}
+                            </span>
+                        </div>
+
+                        <div className={styles.infoItem}>
+                            <span className={styles.infoLabel}>
+                                Email
+                            </span>
+                            <span className={styles.infoValue}>
+                                {member.email}
+                            </span>
+                        </div>
+
+                        <div className={styles.infoItem}>
+                            <span className={styles.infoLabel}>
+                                Phone
+                            </span>
+                            <span className={styles.infoValue}>
+                                {member.phoneNumber}
+                            </span>
+                        </div>
                     </div>
-                </form>
-            </div>
-        )}
+                )}
+            </section>
 
-        {/* -------------------------------- */}
-        {/* Current Subscription */}
-        {/* -------------------------------- */}
+            {/* -------------------------------- */}
+            {/* Membership Information */}
+            {/* -------------------------------- */}
 
-        <section>
-            <h2>Current Subscription</h2>
+            <section className={styles.section}>
+                <div className={styles.sectionHeader}>
+                    <h2 className={styles.sectionTitle}>
+                        Membership Information
+                    </h2>
 
-            {member.currentSubscription ? (
-                <div>
-                    <p>
-                        <strong>Tier:</strong>{" "}
-                        {
-                            member.currentSubscription
-                                .tier
-                        }
-                    </p>
+                    <span
+                        className={`${styles.status} ${
+                            member.active
+                                ? styles.statusActive
+                                : styles.statusInactive
+                        }`}
+                    >
+                        {member.active ? "Active" : "Inactive"}
+                    </span>
+                </div>
 
-                    <p>
-                        <strong>
-                            Payment status:
-                        </strong>{" "}
-                        {
-                            member.currentSubscription
-                                .paymentStatus
-                        }
-                    </p>
+                <div className={styles.infoGrid}>
+                    <div className={styles.infoItem}>
+                        <span className={styles.infoLabel}>
+                            Membership number
+                        </span>
+                        <span className={styles.infoValue}>
+                            {member.membershipNumber}
+                        </span>
+                    </div>
 
-                    <p>
-                        <strong>Starts:</strong>{" "}
-                        {new Date(
-                            member.currentSubscription.startsAt
-                        ).toLocaleString()}
-                    </p>
+                    <div className={styles.infoItem}>
+                        <span className={styles.infoLabel}>
+                            Registered
+                        </span>
+                        <span className={styles.infoValue}>
+                            {new Date(member.registeredAt).toLocaleString()}
+                        </span>
+                    </div>
 
-                    <p>
-                        <strong>Ends:</strong>{" "}
-                        {new Date(
-                            member.currentSubscription.endsAt
-                        ).toLocaleString()}
-                    </p>
-
-                    <p>
-                        <strong>Amount paid:</strong>{" "}
-                        {
-                            member.currentSubscription
-                                .amountPaid
-                        }{" "}
-                        {
-                            member.currentSubscription
-                                .currency
-                        }
-                    </p>
-
-                    <p>
-                        <strong>Paid at:</strong>{" "}
-                        {new Date(
-                            member.currentSubscription.paidAt
-                        ).toLocaleString()}
-                    </p>
-
-                    {member.currentSubscription
-                        .paymentReference && (
-                        <p>
-                            <strong>
-                                Payment reference:
-                            </strong>{" "}
-                            {
-                                member
-                                    .currentSubscription
-                                    .paymentReference
-                            }
-                        </p>
+                    {member.changedAt && (
+                        <div className={styles.infoItem}>
+                            <span className={styles.infoLabel}>
+                                Last changed
+                            </span>
+                            <span className={styles.infoValue}>
+                                {new Date(member.changedAt).toLocaleString()}
+                            </span>
+                        </div>
                     )}
                 </div>
-            ) : (
-                <p>No active subscription.</p>
-            )}
-        </section>
+            </section>
 
-        {/* -------------------------------- */}
-        {/* Subscription History */}
-        {/* -------------------------------- */}
+            {/* -------------------------------- */}
+            {/* Loans */}
+            {/* -------------------------------- */}
 
-        <section>
-            <h2>Subscription History</h2>
+            <section className={styles.section}>
+                <div className={styles.sectionHeader}>
+                    <h2 className={styles.sectionTitle}>
+                        Loans
+                        <span className={styles.sectionCount}>
+                            ({activeLoansCount} active)
+                        </span>
+                    </h2>
 
-            {member.subscriptionHistory &&
-            member.subscriptionHistory.length > 0 ? (
-                member.subscriptionHistory.map(
-                    (subscription) => (
-                        <div
-                            key={
-                                subscription.subscriptionId
-                            }
-                        >
-                            <p>
-                                <strong>
-                                    Tier:
-                                </strong>{" "}
-                                {subscription.tier}
-                            </p>
+                    <button
+                        type="button"
+                        className={styles.primaryButton}
+                        onClick={openLoanModal}
+                    >
+                        + Add Loan
+                    </button>
+                </div>
 
-                            <p>
-                                <strong>
-                                    Starts:
-                                </strong>{" "}
-                                {new Date(
-                                    subscription.startsAt
-                                ).toLocaleString()}
-                            </p>
+                {loansLoading ? (
+                    <p className={styles.mutedText}>Loading loans...</p>
+                ) : loansError ? (
+                    <div className={styles.error} role="alert">
+                        {loansError}
+                    </div>
+                ) : activeLoans.length === 0 ? (
+                    <div className={styles.emptyState}>
+                        No active loans for this member.
+                    </div>
+                ) : (
+                    <div className={styles.list}>
+                        {activeLoans.map((loan) => (
+                            <div key={loan.loanId} className={styles.listItem}>
+                                <div className={styles.listItemHeader}>
+                                    <div>
+                                        <h3 className={styles.listItemTitle}>
+                                            {loanBookNames[loan.bookId] ||
+                                                "Loading..."}
+                                        </h3>
+                                    </div>
 
-                            <p>
-                                <strong>
-                                    Ends:
-                                </strong>{" "}
-                                {new Date(
-                                    subscription.endsAt
-                                ).toLocaleString()}
-                            </p>
+                                    <div className={styles.listItemActions}>
+                                        <button
+                                            type="button"
+                                            className={styles.secondaryButton}
+                                            onClick={() =>
+                                                navigate(`/loans/${loan.loanId}`)
+                                            }
+                                        >
+                                            Details
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </section>
 
-                            <p>
-                                <strong>
-                                    Amount:
-                                </strong>{" "}
-                                {
-                                    subscription.amountPaid
-                                }{" "}
-                                {
-                                    subscription.currency
-                                }
-                            </p>
+            {/* -------------------------------- */}
+            {/* Loan History */}
+            {/* -------------------------------- */}
 
-                            <hr />
+            <section className={styles.section}>
+                <div className={styles.sectionHeader}>
+                    <h2 className={styles.sectionTitle}>
+                        Loan History
+                    </h2>
+                </div>
+
+                {loansLoading ? (
+                    <p className={styles.mutedText}>
+                        Loading loan history...
+                    </p>
+                ) : loansError ? (
+                    <div className={styles.error} role="alert">
+                        {loansError}
+                    </div>
+                ) : historicLoans.length === 0 ? (
+                    <div className={styles.emptyState}>
+                        No historic loans for this member.
+                    </div>
+                ) : (
+                    <div className={styles.list}>
+                        {historicLoans.map((loan) => (
+                            <div key={loan.loanId} className={styles.listItem}>
+                                <div className={styles.listItemHeader}>
+                                    <h3 className={styles.listItemTitle}>
+                                        {loanBookNames[loan.bookId] ||
+                                            "Loading..."}
+                                    </h3>
+
+                                    <div className={styles.listItemActions}>
+                                        <button
+                                            type="button"
+                                            className={styles.secondaryButton}
+                                            onClick={() =>
+                                                navigate(`/loans/${loan.loanId}`)
+                                            }
+                                        >
+                                            Details
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </section>
+
+            {/* -------------------------------- */}
+            {/* Active Fees */}
+            {/* -------------------------------- */}
+
+            <section className={styles.section}>
+                <div className={styles.sectionHeader}>
+                    <h2 className={styles.sectionTitle}>
+                        Active Fees
+                        <span className={styles.sectionCount}>
+                            ({activeFees.length})
+                        </span>
+                    </h2>
+
+                    <button
+                        type="button"
+                        className={styles.primaryButton}
+                        onClick={openPaymentQuoteModal}
+                        disabled={activeFees.length === 0}
+                    >
+                        Pay Active Fees
+                    </button>
+                </div>
+
+                {feesLoading ? (
+                    <p className={styles.mutedText}>Loading fees...</p>
+                ) : feesError ? (
+                    <div className={styles.error} role="alert">
+                        {feesError}
+                    </div>
+                ) : activeFees.length === 0 ? (
+                    <div className={styles.emptyState}>
+                        No active fees for this member.
+                    </div>
+                ) : (
+                    <div className={styles.list}>
+                        {activeFees.map((fee) => (
+                            <div key={fee.feeId} className={styles.listItem}>
+                                <div className={styles.infoGrid}>
+                                    <div className={styles.infoItem}>
+                                        <span className={styles.infoLabel}>
+                                            Reason
+                                        </span>
+                                        <span className={styles.infoValue}>
+                                            {fee.reason}
+                                        </span>
+                                    </div>
+
+                                    <div className={styles.infoItem}>
+                                        <span className={styles.infoLabel}>
+                                            Created
+                                        </span>
+                                        <span className={styles.infoValue}>
+                                            {new Date(
+                                                fee.createdAt
+                                            ).toLocaleString()}
+                                        </span>
+                                    </div>
+
+                                    {fee.dueAt && (
+                                        <div className={styles.infoItem}>
+                                            <span
+                                                className={styles.infoLabel}
+                                            >
+                                                Due
+                                            </span>
+                                            <span
+                                                className={styles.infoValue}
+                                            >
+                                                {new Date(
+                                                    fee.dueAt
+                                                ).toLocaleString()}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </section>
+
+            {/* -------------------------------- */}
+            {/* Fee History */}
+            {/* -------------------------------- */}
+
+            <section className={styles.section}>
+                <div className={styles.sectionHeader}>
+                    <h2 className={styles.sectionTitle}>
+                        Fee History
+                    </h2>
+                </div>
+
+                {feesLoading ? (
+                    <p className={styles.mutedText}>
+                        Loading fee history...
+                    </p>
+                ) : feesError ? (
+                    <div className={styles.error} role="alert">
+                        {feesError}
+                    </div>
+                ) : historicFees.length === 0 ? (
+                    <div className={styles.emptyState}>
+                        No historic fees for this member.
+                    </div>
+                ) : (
+                    <div className={styles.list}>
+                        {historicFees.map((fee) => (
+                            <div key={fee.feeId} className={styles.listItem}>
+                                <div className={styles.infoGrid}>
+                                    <div className={styles.infoItem}>
+                                        <span className={styles.infoLabel}>
+                                            Reason
+                                        </span>
+                                        <span className={styles.infoValue}>
+                                            {fee.reason}
+                                        </span>
+                                    </div>
+
+                                    <div className={styles.infoItem}>
+                                        <span className={styles.infoLabel}>
+                                            Created
+                                        </span>
+                                        <span className={styles.infoValue}>
+                                            {new Date(
+                                                fee.createdAt
+                                            ).toLocaleString()}
+                                        </span>
+                                    </div>
+
+                                    {fee.settledAt && (
+                                        <div className={styles.infoItem}>
+                                            <span
+                                                className={styles.infoLabel}
+                                            >
+                                                Settled
+                                            </span>
+                                            <span
+                                                className={styles.infoValue}
+                                            >
+                                                {new Date(
+                                                    fee.settledAt
+                                                ).toLocaleString()}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </section>
+
+            {/* -------------------------------- */}
+            {/* Payment History */}
+            {/* -------------------------------- */}
+
+            <section className={styles.section}>
+                <div className={styles.sectionHeader}>
+                    <h2 className={styles.sectionTitle}>
+                        Payment History
+                    </h2>
+                </div>
+
+                {paymentsLoading ? (
+                    <p className={styles.mutedText}>
+                        Loading payment history...
+                    </p>
+                ) : paymentsError ? (
+                    <div className={styles.error} role="alert">
+                        {paymentsError}
+                    </div>
+                ) : payments.length === 0 ? (
+                    <div className={styles.emptyState}>
+                        No payments found for this member.
+                    </div>
+                ) : (
+                    <div className={styles.list}>
+                        {payments.map((payment) => (
+                            <div
+                                key={payment.paymentId}
+                                className={styles.listItem}
+                            >
+                                <div className={styles.infoGrid}>
+                                    <div className={styles.infoItem}>
+                                        <span className={styles.infoLabel}>
+                                            Total
+                                        </span>
+                                        <span className={styles.infoValue}>
+                                            {payment.amount}{" "}
+                                            {payment.currency}
+                                        </span>
+                                    </div>
+
+                                    <div className={styles.infoItem}>
+                                        <span className={styles.infoLabel}>
+                                            Paid
+                                        </span>
+                                        <span className={styles.infoValue}>
+                                            {new Date(
+                                                payment.paidAt
+                                            ).toLocaleString()}
+                                        </span>
+                                    </div>
+
+                                    <div className={styles.infoItem}>
+                                        <span className={styles.infoLabel}>
+                                            Fees paid
+                                        </span>
+                                        <span className={styles.infoValue}>
+                                            {payment.allocations?.length || 0}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </section>
+
+            {/* -------------------------------- */}
+            {/* Active Borrowing Ban */}
+            {/* -------------------------------- */}
+
+            <section className={styles.section}>
+                <div className={styles.sectionHeader}>
+                    <h2 className={styles.sectionTitle}>
+                        Active Borrowing Ban
+                    </h2>
+
+                    {borrowingBan?.active &&
+                        borrowingBan.currentBan && (
+                            <span
+                                className={`${styles.status} ${styles.statusWarn}`}
+                            >
+                                Banned
+                            </span>
+                        )}
+                </div>
+
+                {banLoading ? (
+                    <p className={styles.mutedText}>
+                        Loading borrowing-ban information...
+                    </p>
+                ) : banError ? (
+                    <div className={styles.error} role="alert">
+                        {banError}
+                    </div>
+                ) : borrowingBan?.active &&
+                borrowingBan.currentBan ? (
+                    <div className={styles.infoGrid}>
+                        <div className={styles.infoItem}>
+                            <span className={styles.infoLabel}>
+                                Tier
+                            </span>
+                            <span className={styles.infoValue}>
+                                {borrowingBan.currentBan.tier}
+                            </span>
                         </div>
-                    )
-                )
-            ) : (
-                <p>
-                    No subscription history.
-                </p>
-            )}
-        </section>
 
-        {/* -------------------------------- */}
-        {/* Subscription Actions */}
-        {/* -------------------------------- */}
+                        <div className={styles.infoItem}>
+                            <span className={styles.infoLabel}>
+                                Reason
+                            </span>
+                            <span className={styles.infoValue}>
+                                {borrowingBan.currentBan.reason}
+                            </span>
+                        </div>
 
-        <section>
-            <h2>Subscription Actions</h2>
+                        <div className={styles.infoItem}>
+                            <span className={styles.infoLabel}>
+                                Starts
+                            </span>
+                            <span className={styles.infoValue}>
+                                {new Date(
+                                    borrowingBan.currentBan.startsAt
+                                ).toLocaleString()}
+                            </span>
+                        </div>
 
-            <button
-                type="button"
-                onClick={openSubscriptionModal}
-            >
-                {isRenewal
-                    ? "Renew Subscription"
-                    : "Start Subscription"}
-            </button>
-        </section>
+                        <div className={styles.infoItem}>
+                            <span className={styles.infoLabel}>
+                                Ends
+                            </span>
+                            <span className={styles.infoValue}>
+                                {borrowingBan.currentBan.endsAt
+                                    ? new Date(
+                                        borrowingBan.currentBan
+                                            .endsAt
+                                    ).toLocaleString()
+                                    : "Permanent"}
+                            </span>
+                        </div>
+                    </div>
+                ) : (
+                    <div className={styles.emptyState}>
+                        No active borrowing ban.
+                    </div>
+                )}
+            </section>
 
-        {/* -------------------------------- */}
-        {/* Subscription Modal */}
-        {/* -------------------------------- */}
+            {/* -------------------------------- */}
+            {/* Borrowing Ban History */}
+            {/* -------------------------------- */}
 
-        {showSubscriptionModal && (
-            <div
-                style={{
-                    position: "fixed",
-                    inset: 0,
-                    backgroundColor:
-                        "rgba(0, 0, 0, 0.5)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    zIndex: 1000,
-                }}
-                onClick={closeSubscriptionModal}
-            >
-                <div
-                    style={{
-                        backgroundColor: "white",
-                        padding: "24px",
-                        borderRadius: "8px",
-                        minWidth: "400px",
-                        maxWidth: "90%",
-                    }}
-                    onClick={(e) =>
-                        e.stopPropagation()
-                    }
-                >
-                    <h2>
+            <section className={styles.section}>
+                <div className={styles.sectionHeader}>
+                    <h2 className={styles.sectionTitle}>
+                        Borrowing Ban History
+                    </h2>
+                </div>
+
+                {banLoading ? (
+                    <p className={styles.mutedText}>
+                        Loading borrowing-ban history...
+                    </p>
+                ) : banError ? (
+                    <div className={styles.error} role="alert">
+                        {banError}
+                    </div>
+                ) : historicBans.length === 0 ? (
+                    <div className={styles.emptyState}>
+                        No historic borrowing bans.
+                    </div>
+                ) : (
+                    <div className={styles.list}>
+                        {historicBans.map((ban) => (
+                            <div key={ban.banId} className={styles.listItem}>
+                                <div className={styles.infoGrid}>
+                                    <div className={styles.infoItem}>
+                                        <span className={styles.infoLabel}>
+                                            Tier
+                                        </span>
+                                        <span className={styles.infoValue}>
+                                            {ban.tier}
+                                        </span>
+                                    </div>
+
+                                    <div className={styles.infoItem}>
+                                        <span className={styles.infoLabel}>
+                                            Reason
+                                        </span>
+                                        <span className={styles.infoValue}>
+                                            {ban.reason}
+                                        </span>
+                                    </div>
+
+                                    <div className={styles.infoItem}>
+                                        <span className={styles.infoLabel}>
+                                            Issued
+                                        </span>
+                                        <span className={styles.infoValue}>
+                                            {new Date(
+                                                ban.issuedAt
+                                            ).toLocaleString()}
+                                        </span>
+                                    </div>
+
+                                    <div className={styles.infoItem}>
+                                        <span className={styles.infoLabel}>
+                                            Ended
+                                        </span>
+                                        <span className={styles.infoValue}>
+                                            {ban.endsAt
+                                                ? new Date(
+                                                    ban.endsAt
+                                                ).toLocaleString()
+                                                : "Permanent"}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </section>
+
+            {/* -------------------------------- */}
+            {/* Current Subscription */}
+            {/* -------------------------------- */}
+
+            <section className={styles.section}>
+                <div className={styles.sectionHeader}>
+                    <h2 className={styles.sectionTitle}>
+                        Current Subscription
+                    </h2>
+
+                    {member.currentSubscription && (
+                        <span
+                            className={`${styles.status} ${styles.statusInfo}`}
+                        >
+                            {member.currentSubscription.paymentStatus ||
+                                "Unknown"}
+                        </span>
+                    )}
+                </div>
+
+                {member.currentSubscription ? (
+                    <div className={styles.infoGrid}>
+                        <div className={styles.infoItem}>
+                            <span className={styles.infoLabel}>
+                                Tier
+                            </span>
+                            <span className={styles.infoValue}>
+                                {member.currentSubscription.tier}
+                            </span>
+                        </div>
+
+                        <div className={styles.infoItem}>
+                            <span className={styles.infoLabel}>
+                                Starts
+                            </span>
+                            <span className={styles.infoValue}>
+                                {new Date(
+                                    member.currentSubscription.startsAt
+                                ).toLocaleString()}
+                            </span>
+                        </div>
+
+                        <div className={styles.infoItem}>
+                            <span className={styles.infoLabel}>
+                                Ends
+                            </span>
+                            <span className={styles.infoValue}>
+                                {new Date(
+                                    member.currentSubscription.endsAt
+                                ).toLocaleString()}
+                            </span>
+                        </div>
+
+                        <div className={styles.infoItem}>
+                            <span className={styles.infoLabel}>
+                                Amount paid
+                            </span>
+                            <span className={styles.infoValue}>
+                                {member.currentSubscription.amountPaid}{" "}
+                                {member.currentSubscription.currency}
+                            </span>
+                        </div>
+
+                        <div className={styles.infoItem}>
+                            <span className={styles.infoLabel}>
+                                Paid at
+                            </span>
+                            <span className={styles.infoValue}>
+                                {new Date(
+                                    member.currentSubscription.paidAt
+                                ).toLocaleString()}
+                            </span>
+                        </div>
+
+                        {member.currentSubscription.paymentReference && (
+                            <div className={styles.infoItem}>
+                                <span className={styles.infoLabel}>
+                                    Payment reference
+                                </span>
+                                <span
+                                    className={`${styles.infoValue} ${styles.infoValueMono}`}
+                                >
+                                    {
+                                        member.currentSubscription
+                                            .paymentReference
+                                    }
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <div className={styles.emptyState}>
+                        No active subscription.
+                    </div>
+                )}
+            </section>
+
+            {/* -------------------------------- */}
+            {/* Subscription History */}
+            {/* -------------------------------- */}
+
+            <section className={styles.section}>
+                <div className={styles.sectionHeader}>
+                    <h2 className={styles.sectionTitle}>
+                        Subscription History
+                    </h2>
+                </div>
+
+                {member.subscriptionHistory &&
+                member.subscriptionHistory.length > 0 ? (
+                    <div className={styles.list}>
+                        {member.subscriptionHistory.map((subscription) => (
+                            <div
+                                key={subscription.subscriptionId}
+                                className={styles.listItem}
+                            >
+                                <div className={styles.infoGrid}>
+                                    <div className={styles.infoItem}>
+                                        <span className={styles.infoLabel}>
+                                            Tier
+                                        </span>
+                                        <span className={styles.infoValue}>
+                                            {subscription.tier}
+                                        </span>
+                                    </div>
+
+                                    <div className={styles.infoItem}>
+                                        <span className={styles.infoLabel}>
+                                            Starts
+                                        </span>
+                                        <span className={styles.infoValue}>
+                                            {new Date(
+                                                subscription.startsAt
+                                            ).toLocaleString()}
+                                        </span>
+                                    </div>
+
+                                    <div className={styles.infoItem}>
+                                        <span className={styles.infoLabel}>
+                                            Ends
+                                        </span>
+                                        <span className={styles.infoValue}>
+                                            {new Date(
+                                                subscription.endsAt
+                                            ).toLocaleString()}
+                                        </span>
+                                    </div>
+
+                                    <div className={styles.infoItem}>
+                                        <span className={styles.infoLabel}>
+                                            Amount
+                                        </span>
+                                        <span className={styles.infoValue}>
+                                            {subscription.amountPaid}{" "}
+                                            {subscription.currency}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className={styles.emptyState}>
+                        No subscription history.
+                    </div>
+                )}
+            </section>
+
+            {/* -------------------------------- */}
+            {/* Subscription Actions */}
+            {/* -------------------------------- */}
+
+            <section className={styles.section}>
+                <div className={styles.sectionHeader}>
+                    <h2 className={styles.sectionTitle}>
+                        Subscription Actions
+                    </h2>
+
+                    <button
+                        type="button"
+                        className={styles.primaryButton}
+                        onClick={openSubscriptionModal}
+                    >
                         {isRenewal
                             ? "Renew Subscription"
                             : "Start Subscription"}
-                    </h2>
+                    </button>
+                </div>
+            </section>
 
-                    {subscriptionError && (
-                        <p role="alert">
-                            {subscriptionError}
-                        </p>
-                    )}
+            {/* ============================= */}
+            {/* PAYMENT QUOTE MODAL */}
+            {/* ============================= */}
 
-                    {/* Tier */}
+            {showPaymentQuoteModal && (
+                <div
+                    className={styles.modalOverlay}
+                    onClick={closePaymentQuoteModal}
+                >
+                    <form
+                        className={styles.modal}
+                        onClick={(event) => event.stopPropagation()}
+                        onSubmit={handleQuotePayment}
+                    >
+                        <h2 className={styles.modalTitle}>
+                            Pay Active Fees
+                        </h2>
 
-                    <div>
-                        <label htmlFor="tier">
-                            Tier
-                        </label>
+                        {paymentQuoteError && (
+                            <div className={styles.modalError} role="alert">
+                                {paymentQuoteError}
+                            </div>
+                        )}
 
-                        <select
-                            id="tier"
-                            name="tier"
-                            value={
-                                subscriptionForm.tier
-                            }
-                            onChange={
-                                handleSubscriptionChange
-                            }
-                            disabled={
-                                startingSubscription
-                            }
-                        >
-                            <option value="THREE_MONTHS">
-                                3 Months
-                            </option>
+                        {paymentQuote ? (
+                            <div className={styles.successBox}>
+                                <p>
+                                    <strong>
+                                        Payment recorded successfully.
+                                    </strong>
+                                </p>
+                                <p>
+                                    Total: {paymentQuote.amount}{" "}
+                                    {paymentQuote.currency}
+                                </p>
+                                <p>
+                                    Payment ID: {paymentQuote.paymentId}
+                                </p>
+                            </div>
+                        ) : (
+                            <>
+                                <p className={styles.mutedText}>
+                                    Select the unpaid fees to pay.
+                                </p>
 
-                            <option value="SIX_MONTHS">
-                                6 Months
-                            </option>
+                                <div className={styles.checkList}>
+                                    {activeFees.map((fee) => (
+                                        <label
+                                            key={fee.feeId}
+                                            className={styles.checkItem}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedFeeIds.includes(
+                                                    fee.feeId
+                                                )}
+                                                onChange={() =>
+                                                    toggleFeeSelection(
+                                                        fee.feeId
+                                                    )
+                                                }
+                                                disabled={quotingPayment}
+                                            />
+                                            <span>
+                                                <strong>{fee.reason}</strong>
+                                                <br />
+                                                <span
+                                                    className={
+                                                        styles.infoValueMono
+                                                    }
+                                                >
+                                                    Created{" "}
+                                                    {new Date(
+                                                        fee.createdAt
+                                                    ).toLocaleDateString()}
+                                                </span>
+                                            </span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </>
+                        )}
 
-                            <option value="TWELVE_MONTHS">
-                                12 Months
-                            </option>
-                        </select>
-                    </div>
+                        <div className={styles.modalActions}>
+                            <button
+                                type="button"
+                                className={styles.secondaryButton}
+                                onClick={closePaymentQuoteModal}
+                                disabled={quotingPayment}
+                            >
+                                Close
+                            </button>
 
-                    {!isRenewal && (
-                        <div>
-                            <label htmlFor="startsAt">
-                                Starts at
-                            </label>
-
-                            <input
-                                id="startsAt"
-                                name="startsAt"
-                                type="datetime-local"
-                                value={
-                                    subscriptionForm.startsAt
-                                }
-                                onChange={
-                                    handleSubscriptionChange
-                                }
-                                disabled={
-                                    startingSubscription
-                                }
-                                required
-                            />
+                            {!paymentQuote && (
+                                <button
+                                    type="submit"
+                                    className={styles.primaryButton}
+                                    disabled={quotingPayment}
+                                >
+                                    {quotingPayment
+                                        ? "Processing payment..."
+                                        : "Pay Selected Fees"}
+                                </button>
+                            )}
                         </div>
-                    )}
+                    </form>
+                </div>
+            )}
 
-                    {/* Buttons */}
+            {/* ============================= */}
+            {/* LOAN MODAL */}
+            {/* ============================= */}
 
-                    <div>
-                        <button
-                            type="button"
-                            onClick={
-                                closeSubscriptionModal
-                            }
-                            disabled={
-                                startingSubscription
-                            }
-                        >
-                            Cancel
-                        </button>
+            {showLoanModal && (
+                <div
+                    className={styles.modalOverlay}
+                    onClick={closeLoanModal}
+                >
+                    <form
+                        className={styles.modal}
+                        onClick={(event) => event.stopPropagation()}
+                        onSubmit={handleCreateLoan}
+                    >
+                        <h2 className={styles.modalTitle}>Add Loan</h2>
 
-                        <button
-                            type="button"
-                            onClick={
-                                handleSubscriptionSubmit
-                            }
-                            disabled={
-                                startingSubscription
-                            }
-                        >
-                            {startingSubscription
-                                ? isRenewal
-                                    ? "Renewing..."
-                                    : "Starting..."
-                                : isRenewal
-                                  ? "Renew Subscription"
-                                  : "Start Subscription"}
-                        </button>
+                        {loanError && (
+                            <div className={styles.modalError} role="alert">
+                                {loanError}
+                            </div>
+                        )}
+
+                        {loanOptionsLoading ? (
+                            <p className={styles.mutedText}>
+                                Loading libraries and books...
+                            </p>
+                        ) : (
+                            <>
+                                <div className={styles.field}>
+                                    <label htmlFor="loanLibrary">
+                                        Library
+                                    </label>
+                                    <select
+                                        id="loanLibrary"
+                                        value={loanForm.libraryId}
+                                        onChange={(event) =>
+                                            setLoanForm((previous) => ({
+                                                ...previous,
+                                                libraryId:
+                                                event.target.value,
+                                            }))
+                                        }
+                                        disabled={creatingLoan}
+                                        required
+                                    >
+                                        <option value="">
+                                            Select a library
+                                        </option>
+                                        {libraries.map((library) => (
+                                            <option
+                                                key={getResourceId(library)}
+                                                value={getResourceId(library)}
+                                            >
+                                                {library.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className={styles.field}>
+                                    <label htmlFor="bookSearch">
+                                        Search books
+                                    </label>
+                                    <input
+                                        id="bookSearch"
+                                        type="search"
+                                        value={bookSearch}
+                                        onChange={(event) =>
+                                            setBookSearch(event.target.value)
+                                        }
+                                        placeholder="Title, author, or ISBN"
+                                        disabled={creatingLoan}
+                                    />
+                                </div>
+
+                                <div className={styles.field}>
+                                    <label htmlFor="loanBook">Book</label>
+                                    <select
+                                        id="loanBook"
+                                        value={loanForm.bookId}
+                                        onChange={(event) =>
+                                            setLoanForm((previous) => ({
+                                                ...previous,
+                                                bookId: event.target.value,
+                                            }))
+                                        }
+                                        disabled={creatingLoan}
+                                        required
+                                    >
+                                        <option value="">
+                                            Select a book
+                                        </option>
+                                        {filteredBooks.map((book) => (
+                                            <option
+                                                key={getResourceId(book)}
+                                                value={getResourceId(book)}
+                                            >
+                                                {book.title} — {book.author} (
+                                                {book.isbn})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </>
+                        )}
+
+                        <div className={styles.modalActions}>
+                            <button
+                                type="button"
+                                className={styles.secondaryButton}
+                                onClick={closeLoanModal}
+                                disabled={creatingLoan}
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                type="submit"
+                                className={styles.primaryButton}
+                                disabled={
+                                    loanOptionsLoading || creatingLoan
+                                }
+                            >
+                                {creatingLoan ? "Adding..." : "Add Loan"}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
+
+            {/* ============================= */}
+            {/* SUBSCRIPTION MODAL */}
+            {/* ============================= */}
+
+            {showSubscriptionModal && (
+                <div
+                    className={styles.modalOverlay}
+                    onClick={closeSubscriptionModal}
+                >
+                    <div
+                        className={styles.modal}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <h2 className={styles.modalTitle}>
+                            {isRenewal
+                                ? "Renew Subscription"
+                                : "Start Subscription"}
+                        </h2>
+
+                        {subscriptionError && (
+                            <div
+                                className={styles.modalError}
+                                role="alert"
+                            >
+                                {subscriptionError}
+                            </div>
+                        )}
+
+                        <div className={styles.field}>
+                            <label htmlFor="tier">Tier</label>
+                            <select
+                                id="tier"
+                                name="tier"
+                                value={subscriptionForm.tier}
+                                onChange={handleSubscriptionChange}
+                                disabled={startingSubscription}
+                            >
+                                <option value="THREE_MONTHS">
+                                    3 Months
+                                </option>
+                                <option value="SIX_MONTHS">
+                                    6 Months
+                                </option>
+                                <option value="TWELVE_MONTHS">
+                                    12 Months
+                                </option>
+                            </select>
+                        </div>
+
+                        {!isRenewal && (
+                            <div className={styles.field}>
+                                <label htmlFor="startsAt">
+                                    Starts at
+                                </label>
+                                <input
+                                    id="startsAt"
+                                    name="startsAt"
+                                    type="datetime-local"
+                                    value={subscriptionForm.startsAt}
+                                    onChange={handleSubscriptionChange}
+                                    disabled={startingSubscription}
+                                    required
+                                />
+                            </div>
+                        )}
+
+                        <div className={styles.modalActions}>
+                            <button
+                                type="button"
+                                className={styles.secondaryButton}
+                                onClick={closeSubscriptionModal}
+                                disabled={startingSubscription}
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                type="button"
+                                className={styles.primaryButton}
+                                onClick={handleSubscriptionSubmit}
+                                disabled={startingSubscription}
+                            >
+                                {startingSubscription
+                                    ? isRenewal
+                                        ? "Renewing..."
+                                        : "Starting..."
+                                    : isRenewal
+                                        ? "Renew Subscription"
+                                        : "Start Subscription"}
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        )}
-    </div>
-);
+            )}
+        </div>
+    );
 }
 
 export default MemberDetailsPage;

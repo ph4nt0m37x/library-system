@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
@@ -16,7 +17,40 @@ import RegisterMemberPage from "./pages/RegisterMemberPage";
 import MemberDetailsPage from "./pages/MemberDetailsPage.jsx";
 import LoanDetailsPage from "./pages/LoanDetailsPage.jsx";
 import BookAvailabilityPage from "./pages/BookAvailabilityPage.jsx";
+import { initKeycloak } from "./keycloak";
 function App() {
+  const [authReady, setAuthReady] = useState(false);
+  const [authError, setAuthError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    initKeycloak()
+      .then(() => {
+        if (!cancelled) {
+          setAuthReady(true);
+        }
+      })
+      .catch((error) => {
+        console.error("Keycloak login failed:", error);
+        if (!cancelled) {
+          setAuthError("Login failed. Please refresh and try again.");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (authError) {
+    return <p>{authError}</p>;
+  }
+
+  if (!authReady) {
+    return <p>Loading session...</p>;
+  }
+
   return (
     <BrowserRouter>
       <Navbar />
@@ -42,4 +76,3 @@ function App() {
 }
 
 export default App;
-

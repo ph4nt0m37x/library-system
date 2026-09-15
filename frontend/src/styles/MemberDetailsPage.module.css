@@ -1,0 +1,519 @@
+/* =========================
+   PAGE
+   ========================= */
+
+.page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+    color: #111827;
+    background: #ffffff;
+}
+
+.page h1,
+.page h2,
+.page h3,
+.page p,
+.page span,
+.page label,
+.page div {
+    color: #111827;
+}
+
+.headerRow {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+/* =========================
+   BACK BUTTON
+   ========================= */
+
+.backButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    padding: 9px 14px;
+    background: #ffffff;
+    color: #111827;
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    margin-bottom: 24px;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.backButton:hover {
+    background: #f9fafb;
+    border-color: #9ca3af;
+}
+
+/* =========================
+   PAGE HEADER
+   ========================= */
+
+.pageHeader {
+    margin-bottom: 32px;
+    text-align: center;
+}
+
+.pageTitle {
+    margin: 0;
+    font-size: 2.25rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #0f172a;
+}
+
+.pageSubtitle {
+    margin-top: 8px;
+    color: #4b5563;
+    font-size: 1rem;
+}
+
+/* =========================
+   ERROR
+   ========================= */
+
+.error {
+    color: #b91c1c;
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    border-radius: 8px;
+    padding: 12px 15px;
+    margin-bottom: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* =========================
+   SECTIONS
+   ========================= */
+
+.section {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 24px 26px;
+    margin-bottom: 20px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.04);
+}
+
+.sectionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+
+.sectionTitle {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.sectionCount {
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #6b7280;
+}
+
+/* =========================
+   INFO GRID (read-only fields)
+   ========================= */
+
+.infoGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px 24px;
+}
+
+.infoItem {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.infoLabel {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6b7280;
+}
+
+.infoValue {
+    font-size: 0.9375rem;
+    color: #111827;
+    font-weight: 500;
+    word-break: break-word;
+}
+
+.infoValueMono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.8125rem;
+    color: #4b5563;
+    word-break: break-all;
+}
+
+/* =========================
+   STATUS PILL
+   ========================= */
+
+.status {
+    display: inline-block;
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+.statusActive {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.statusInactive {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.statusWarn {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.statusInfo {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.statusNeutral {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+/* =========================
+   BUTTONS
+   ========================= */
+
+.primaryButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border: none;
+    border-radius: 10px;
+    padding: 11px 18px;
+    background: #111827;
+    color: #ffffff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.05s ease;
+}
+
+.primaryButton:hover:not(:disabled) { background: #1f2937; }
+.primaryButton:active:not(:disabled) { transform: scale(0.98); }
+.primaryButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.secondaryButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    padding: 9px 14px;
+    background: #ffffff;
+    color: #111827;
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.secondaryButton:hover:not(:disabled) {
+    background: #f9fafb;
+    border-color: #9ca3af;
+}
+
+.secondaryButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.linkButton {
+    border: none;
+    background: none;
+    color: #111827;
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    padding: 0;
+    transition: border-color 0.15s ease;
+}
+
+.linkButton:hover {
+    border-bottom-color: #111827;
+}
+
+/* =========================
+   FORM (edit mode)
+   ========================= */
+
+.formGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+@media (max-width: 640px) {
+    .formGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.field label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.field input,
+.field select {
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.9375rem;
+    font-family: inherit;
+    outline: none;
+    background: #ffffff;
+    color: #111827;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.field input::placeholder {
+    color: #9ca3af;
+}
+
+.field input:focus,
+.field select:focus {
+    border-color: #111827;
+    box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+}
+
+.formActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+/* =========================
+   LIST ITEMS (loans, fees, payments, bans, subscriptions)
+   ========================= */
+
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.listItem {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 16px 18px;
+    background: #f9fafb;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.listItemHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.listItemTitle {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.listItemActions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* =========================
+   EMPTY / MUTED
+   ========================= */
+
+.mutedText {
+    color: #6b7280;
+    font-size: 0.9375rem;
+    margin: 0;
+}
+
+.emptyState {
+    text-align: center;
+    padding: 40px 20px;
+    color: #4b5563;
+    background: #f9fafb;
+    border: 1px dashed #e5e7eb;
+    border-radius: 12px;
+    font-size: 0.9375rem;
+}
+
+/* =========================
+   LOADING
+   ========================= */
+
+.loadingWrap {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    font-size: 0.9375rem;
+}
+
+/* =========================
+   MODAL
+   ========================= */
+
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 24, 39, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+}
+
+.modal {
+    background: #ffffff;
+    padding: 28px;
+    border-radius: 16px;
+    width: 480px;
+    max-width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.modalTitle {
+    margin: 0 0 20px;
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.modalError {
+    color: #b91c1c;
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    border-radius: 8px;
+    padding: 10px 13px;
+    margin-bottom: 16px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.modalActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 24px;
+}
+
+/* Payment success block */
+.successBox {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+}
+
+.successBox p {
+    margin: 0 0 6px;
+    font-size: 0.9375rem;
+    color: #166534;
+}
+
+.successBox p:last-child {
+    margin-bottom: 0;
+}
+
+/* Fee checklist in payment modal */
+.checkList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.checkItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #f9fafb;
+    cursor: pointer;
+    font-size: 0.9375rem;
+    transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.checkItem:hover {
+    background: #f3f4f6;
+}
+
+.checkItem input[type="checkbox"] {
+    margin-top: 2px;
+    accent-color: #111827;
+    cursor: pointer;
+}

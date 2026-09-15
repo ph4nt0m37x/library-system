@@ -24,8 +24,8 @@ services:
   borrowing-service-app:
     build:
       context: .
-    hostname: borrowing-service_app
-    container_name: borrowing-service_app
+    hostname: borrowing-service-app
+    container_name: borrowing-service-app
     restart: unless-stopped
     depends_on:
       mysqldb:

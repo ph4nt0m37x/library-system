@@ -1,16 +1,22 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import styles from "../styles/LoanDetailsPage.module.css";
 import keycloak from "../keycloak";
 
 function LoanDetailsPage() {
     const { id } = useParams();
     const navigate = useNavigate();
+
     const [loan, setLoan] = useState(null);
-    const [bookName, setBookName] = useState("");
+    const [book, setBook] = useState(null);
+    const [library, setLibrary] = useState(null);
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [loanAction, setLoanAction] = useState("");
     const [actionError, setActionError] = useState("");
+
+    const API = "http://localhost:8000";
 
     useEffect(() => {
         const loadLoan = async () => {
@@ -18,13 +24,14 @@ function LoanDetailsPage() {
                 setLoading(true);
                 setError("");
 
+                const headers = {
+                    Authorization: `Bearer ${keycloak.token}`,
+                };
+
+                // Get loan
                 const loanResponse = await fetch(
-                    `http://localhost:8000/api/loans/${id}`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${keycloak.token}`,
-                        },
-                    }
+                    `${API}/api/loans/${id}`,
+                    { headers }
                 );
 
                 if (!loanResponse.ok) {
@@ -34,20 +41,26 @@ function LoanDetailsPage() {
                 const loanData = await loanResponse.json();
                 setLoan(loanData);
 
-                const bookResponse = await fetch(
-                    `http://localhost:8000/api/books/${loanData.bookId}`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${keycloak.token}`,
-                        },
-                    }
-                );
+                // Get book and library at the same time
+                const [bookResponse, libraryResponse] = await Promise.all([
+                    fetch(
+                        `${API}/api/books/${loanData.bookId}`,
+                        { headers }
+                    ),
+                    fetch(
+                        `${API}/api/libraries/${loanData.libraryId}`,
+                        { headers }
+                    ),
+                ]);
 
                 if (bookResponse.ok) {
                     const bookData = await bookResponse.json();
-                    setBookName(bookData.title);
-                } else {
-                    setBookName("Unknown book");
+                    setBook(bookData);
+                }
+
+                if (libraryResponse.ok) {
+                    const libraryData = await libraryResponse.json();
+                    setLibrary(libraryData);
                 }
             } catch (err) {
                 console.error(err);
@@ -60,28 +73,13 @@ function LoanDetailsPage() {
         loadLoan();
     }, [id]);
 
-    if (loading) {
-        return <p>Loading loan...</p>;
-    }
-
-    if (!loan) {
-        return (
-            <div>
-                <p>{error || "Loan not found."}</p>
-                <button type="button" onClick={() => navigate(-1)}>
-                    Back
-                </button>
-            </div>
-        );
-    }
-
     const handleReturn = async () => {
         try {
             setLoanAction("return");
             setActionError("");
 
             const response = await fetch(
-                `http://localhost:8000/api/loans/${id}/return`,
+                `${API}/api/loans/${id}/return`,
                 {
                     method: "POST",
                     headers: {
@@ -96,10 +94,12 @@ function LoanDetailsPage() {
             }
 
             for (let attempt = 0; attempt < 5; attempt++) {
-                await new Promise((resolve) => setTimeout(resolve, 300));
+                await new Promise((resolve) =>
+                    setTimeout(resolve, 300)
+                );
 
                 const loanResponse = await fetch(
-                    `http://localhost:8000/api/loans/${id}`,
+                    `${API}/api/loans/${id}`,
                     {
                         headers: {
                             Authorization: `Bearer ${keycloak.token}`,
@@ -120,7 +120,9 @@ function LoanDetailsPage() {
             }
         } catch (err) {
             console.error(err);
-            setActionError(err.message || "Failed to return book.");
+            setActionError(
+                err.message || "Failed to return book."
+            );
         } finally {
             setLoanAction("");
         }
@@ -132,7 +134,7 @@ function LoanDetailsPage() {
             setActionError("");
 
             const response = await fetch(
-                `http://localhost:8000/api/loans/${id}/${action}`,
+                `${API}/api/loans/${id}/${action}`,
                 {
                     method: "POST",
                     headers: {
@@ -149,10 +151,12 @@ function LoanDetailsPage() {
             }
 
             for (let attempt = 0; attempt < 5; attempt++) {
-                await new Promise((resolve) => setTimeout(resolve, 300));
+                await new Promise((resolve) =>
+                    setTimeout(resolve, 300)
+                );
 
                 const loanResponse = await fetch(
-                    `http://localhost:8000/api/loans/${id}`,
+                    `${API}/api/loans/${id}`,
                     {
                         headers: {
                             Authorization: `Bearer ${keycloak.token}`,
@@ -185,10 +189,11 @@ function LoanDetailsPage() {
         try {
             setLoanAction("extend");
             setActionError("");
+
             const previousExtendedAt = loan.extendedAt;
 
             const response = await fetch(
-                `http://localhost:8000/api/loans/${id}/extend`,
+                `${API}/api/loans/${id}/extend`,
                 {
                     method: "POST",
                     headers: {
@@ -199,14 +204,18 @@ function LoanDetailsPage() {
 
             if (!response.ok) {
                 const message = await response.text();
-                throw new Error(message || "Failed to extend loan.");
+                throw new Error(
+                    message || "Failed to extend loan."
+                );
             }
 
             for (let attempt = 0; attempt < 5; attempt++) {
-                await new Promise((resolve) => setTimeout(resolve, 300));
+                await new Promise((resolve) =>
+                    setTimeout(resolve, 300)
+                );
 
                 const loanResponse = await fetch(
-                    `http://localhost:8000/api/loans/${id}`,
+                    `${API}/api/loans/${id}`,
                     {
                         headers: {
                             Authorization: `Bearer ${keycloak.token}`,
@@ -227,107 +236,297 @@ function LoanDetailsPage() {
             }
         } catch (err) {
             console.error(err);
-            setActionError(err.message || "Failed to extend loan.");
+            setActionError(
+                err.message || "Failed to extend loan."
+            );
         } finally {
             setLoanAction("");
         }
     };
 
-    return (
-        <div>
-            <button type="button" onClick={() => navigate(-1)}>
-                Back
-            </button>
+    if (loading) {
+        return (
+            <div className={styles.page}>
+                <div className={styles.loadingWrap}>
+                    Loading loan...
+                </div>
+            </div>
+        );
+    }
 
-            <h1>Loan Details</h1>
+    if (!loan) {
+        return (
+            <div className={styles.page}>
+                <div className={styles.emptyState}>
+                    {error || "Loan not found."}
+                </div>
 
-            <p>
-                <strong>Book:</strong> {bookName || "Loading..."}
-            </p>
-
-            <p>
-                <strong>Status:</strong> {loan.status}
-            </p>
-
-            {loan.status === "ACTIVE" && (
-                <div>
-                    {actionError && <p role="alert">{actionError}</p>}
-
+                <div style={{ textAlign: "center" }}>
                     <button
                         type="button"
-                        onClick={handleReturn}
-                        disabled={Boolean(loanAction)}
+                        className={styles.primaryButton}
+                        onClick={() => navigate(-1)}
                     >
-                        {loanAction === "return"
-                            ? "Returning..."
-                            : "Return Book"}
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={handleExtend}
-                        disabled={Boolean(loanAction)}
-                    >
-                        {loanAction === "extend"
-                            ? "Extending..."
-                            : "Extend Loan"}
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={() => handleIncident("lost", "LOST")}
-                        disabled={Boolean(loanAction)}
-                    >
-                        {loanAction === "lost"
-                            ? "Recording..."
-                            : "Mark as Lost"}
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={() => handleIncident("damage", "DAMAGED")}
-                        disabled={Boolean(loanAction)}
-                    >
-                        {loanAction === "damage"
-                            ? "Recording..."
-                            : "Record Damage"}
+                        ← Back
                     </button>
                 </div>
+            </div>
+        );
+    }
+
+    const getStatusClass = (status) => {
+        switch ((status ?? "").toUpperCase()) {
+            case "ACTIVE":
+                return styles.statusActive;
+            case "RETURNED":
+                return styles.statusReturned;
+            case "LOST":
+                return styles.statusLost;
+            case "DAMAGED":
+                return styles.statusDamaged;
+            default:
+                return styles.statusNeutral;
+        }
+    };
+
+    const prettyStatus = (status) => {
+        if (!status) return "Unknown";
+
+        return String(status)
+            .toLowerCase()
+            .split("_")
+            .map(
+                (w) =>
+                    w.charAt(0).toUpperCase() + w.slice(1)
+            )
+            .join(" ");
+    };
+
+    return (
+        <div className={styles.page}>
+            <div className={styles.headerRow}>
+                <button
+                    type="button"
+                    className={styles.backButton}
+                    onClick={() => navigate(-1)}
+                >
+                    ← Back
+                </button>
+
+                <div className={styles.pageHeader}>
+                    <div className={styles.pageTitleRow}>
+                        <div>
+                            <h1 className={styles.pageTitle}>
+                                Loan Details
+                            </h1>
+
+                            <p className={styles.pageSubtitle}>
+                                {book?.title || "Unknown book"}
+                            </p>
+                        </div>
+
+                        <span
+                            className={`${styles.status} ${getStatusClass(
+                                loan.status
+                            )}`}
+                        >
+                {prettyStatus(loan.status)}
+            </span>
+                    </div>
+                </div>
+            </div>
+
+            {loan.status === "ACTIVE" && (
+                <section className={styles.card}>
+                    <div className={styles.cardHeader}>
+                        <h2 className={styles.cardTitle}>
+                            Actions
+                        </h2>
+                    </div>
+
+                    {actionError && (
+                        <div
+                            className={styles.error}
+                            role="alert"
+                        >
+                            {actionError}
+                        </div>
+                    )}
+
+                    <div className={styles.actionsGrid}>
+                        <button
+                            type="button"
+                            className={styles.primaryButton}
+                            onClick={handleReturn}
+                            disabled={Boolean(loanAction)}
+                        >
+                            {loanAction === "return"
+                                ? "Returning..."
+                                : "Return Book"}
+                        </button>
+
+                        <button
+                            type="button"
+                            className={styles.secondaryButton}
+                            onClick={handleExtend}
+                            disabled={Boolean(loanAction)}
+                        >
+                            {loanAction === "extend"
+                                ? "Extending..."
+                                : "Extend Loan"}
+                        </button>
+
+                        <button
+                            type="button"
+                            className={styles.dangerButton}
+                            onClick={() =>
+                                handleIncident(
+                                    "lost",
+                                    "LOST"
+                                )
+                            }
+                            disabled={Boolean(loanAction)}
+                        >
+                            {loanAction === "lost"
+                                ? "Recording..."
+                                : "Mark as Lost"}
+                        </button>
+
+                        <button
+                            type="button"
+                            className={styles.warnButton}
+                            onClick={() =>
+                                handleIncident(
+                                    "damage",
+                                    "DAMAGED"
+                                )
+                            }
+                            disabled={Boolean(loanAction)}
+                        >
+                            {loanAction === "damage"
+                                ? "Recording..."
+                                : "Record Damage"}
+                        </button>
+                    </div>
+                </section>
             )}
 
-            <p>
-                <strong>Library ID:</strong> {loan.libraryId || "Not specified"}
-            </p>
+            <section className={styles.card}>
+                <div className={styles.cardHeader}>
+                    <h2 className={styles.cardTitle}>
+                        Loan Information
+                    </h2>
+                </div>
 
-            <p>
-                <strong>Borrowed:</strong>{" "}
-                {new Date(loan.borrowedAt).toLocaleString()}
-            </p>
+                <div className={styles.infoGrid}>
+                    <div className={styles.infoItem}>
+                        <span className={styles.infoLabel}>
+                            Book
+                        </span>
 
-            <p>
-                <strong>Due:</strong> {new Date(loan.dueAt).toLocaleString()}
-            </p>
+                        {book ? (
+                            <Link
+                                to={`/books/${loan.bookId}`}
+                                className={styles.bookLink}
+                            >
+                                {book.title}
+                            </Link>
+                        ) : (
+                            <span className={styles.infoValue}>
+                                Unknown book
+                            </span>
+                        )}
+                    </div>
 
-            <p>
-                <strong>Extended:</strong>{" "}
-                {loan.extendedAt
-                    ? new Date(loan.extendedAt).toLocaleString()
-                    : "Not extended"}
-            </p>
+                    <div className={styles.infoItem}>
+                        <span className={styles.infoLabel}>
+                            Library
+                        </span>
 
-            <p>
-                <strong>Returned:</strong>{" "}
-                {loan.returnedAt
-                    ? new Date(loan.returnedAt).toLocaleString()
-                    : "Not returned"}
-            </p>
+                        <span className={styles.infoValue}>
+                            {library?.name || "Unknown library"}
+                        </span>
+                    </div>
 
-            {loan.incidentDeclaredAt && (
-                <p>
-                    <strong>Incident declared:</strong>{" "}
-                    {new Date(loan.incidentDeclaredAt).toLocaleString()}
-                </p>
-            )}
+                    <div className={styles.infoItem}>
+                        <span className={styles.infoLabel}>
+                            Borrowed
+                        </span>
+
+                        <span className={styles.infoValue}>
+                            {new Date(
+                                loan.borrowedAt
+                            ).toLocaleString()}
+                        </span>
+                    </div>
+
+                    <div className={styles.infoItem}>
+                        <span className={styles.infoLabel}>
+                            Due
+                        </span>
+
+                        <span className={styles.infoValue}>
+                            {new Date(
+                                loan.dueAt
+                            ).toLocaleString()}
+                        </span>
+                    </div>
+
+                    <div className={styles.infoItem}>
+                        <span className={styles.infoLabel}>
+                            Extended
+                        </span>
+
+                        <span
+                            className={
+                                loan.extendedAt
+                                    ? styles.infoValue
+                                    : `${styles.infoValue} ${styles.infoValueMuted}`
+                            }
+                        >
+                            {loan.extendedAt
+                                ? new Date(
+                                    loan.extendedAt
+                                ).toLocaleString()
+                                : "Not extended"}
+                        </span>
+                    </div>
+
+                    <div className={styles.infoItem}>
+                        <span className={styles.infoLabel}>
+                            Returned
+                        </span>
+
+                        <span
+                            className={
+                                loan.returnedAt
+                                    ? styles.infoValue
+                                    : `${styles.infoValue} ${styles.infoValueMuted}`
+                            }
+                        >
+                            {loan.returnedAt
+                                ? new Date(
+                                    loan.returnedAt
+                                ).toLocaleString()
+                                : "Not returned"}
+                        </span>
+                    </div>
+
+                    {loan.incidentDeclaredAt && (
+                        <div className={styles.infoItem}>
+                            <span className={styles.infoLabel}>
+                                Incident declared
+                            </span>
+
+                            <span className={styles.infoValue}>
+                                {new Date(
+                                    loan.incidentDeclaredAt
+                                ).toLocaleString()}
+                            </span>
+                        </div>
+                    )}
+                </div>
+            </section>
         </div>
     );
 }

@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import keycloak from "../keycloak";
+import styles from "../styles/RegisterMemberPage.module.css";
+
+const API = "http://localhost:8000";
 
 function RegisterMemberPage() {
     const navigate = useNavigate();
@@ -30,7 +33,7 @@ function RegisterMemberPage() {
             setError("");
 
             const response = await fetch(
-                "http://localhost:8000/api/members/register",
+                `${API}/api/members/register`,
                 {
                     method: "POST",
                     headers: {
@@ -58,71 +61,101 @@ function RegisterMemberPage() {
     };
 
     return (
-        <div>
-            <h1>Register Member</h1>
+        <div className={styles.page}>
+            <div className={styles.header}>
+                <h1 className={styles.title}>Register Member</h1>
 
-            {error && <p>{error}</p>}
+                <p className={styles.subtitle}>
+                    Add a new member to the library system.
+                </p>
+            </div>
 
-            <form onSubmit={handleSubmit}>
-                <div>
-                    <label htmlFor="firstName">First name</label>
-                    <input
-                        id="firstName"
-                        name="firstName"
-                        type="text"
-                        value={form.firstName}
-                        onChange={handleChange}
-                        required
-                    />
+            {error && <div className={styles.error}>{error}</div>}
+
+            <form
+                className={styles.formCard}
+                onSubmit={handleSubmit}
+            >
+                <div className={styles.formGrid}>
+                    <div className={styles.field}>
+                        <label htmlFor="firstName">
+                            First name
+                        </label>
+                        <input
+                            id="firstName"
+                            name="firstName"
+                            type="text"
+                            value={form.firstName}
+                            onChange={handleChange}
+                            placeholder="Jane"
+                            required
+                        />
+                    </div>
+
+                    <div className={styles.field}>
+                        <label htmlFor="lastName">
+                            Last name
+                        </label>
+                        <input
+                            id="lastName"
+                            name="lastName"
+                            type="text"
+                            value={form.lastName}
+                            onChange={handleChange}
+                            placeholder="Doe"
+                            required
+                        />
+                    </div>
+
+                    <div className={styles.field}>
+                        <label htmlFor="email">Email</label>
+                        <input
+                            id="email"
+                            name="email"
+                            type="email"
+                            value={form.email}
+                            onChange={handleChange}
+                            placeholder="jane.doe@example.com"
+                            required
+                        />
+                    </div>
+
+                    <div className={styles.field}>
+                        <label htmlFor="phoneNumber">
+                            Phone number
+                        </label>
+                        <input
+                            id="phoneNumber"
+                            name="phoneNumber"
+                            type="text"
+                            value={form.phoneNumber}
+                            onChange={handleChange}
+                            placeholder=" 070 123 456"
+                            required
+                        />
+                    </div>
                 </div>
 
-                <div>
-                    <label htmlFor="lastName">Last name</label>
-                    <input
-                        id="lastName"
-                        name="lastName"
-                        type="text"
-                        value={form.lastName}
-                        onChange={handleChange}
-                        required
-                    />
+                <div className={styles.formActions}>
+                    <button
+                        type="button"
+                        className={styles.secondaryButton}
+                        onClick={() => navigate("/members")}
+                        disabled={loading}
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        type="submit"
+                        className={styles.primaryButton}
+                        disabled={loading}
+                    >
+                        {loading
+                            ? "Registering..."
+                            : "Register Member"}
+                    </button>
                 </div>
-
-                <div>
-                    <label htmlFor="email">Email</label>
-                    <input
-                        id="email"
-                        name="email"
-                        type="email"
-                        value={form.email}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
-
-                <div>
-                    <label htmlFor="phoneNumber">Phone number</label>
-                    <input
-                        id="phoneNumber"
-                        name="phoneNumber"
-                        type="text"
-                        value={form.phoneNumber}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
-
-                <button type="submit" disabled={loading}>
-                    {loading ? "Registering..." : "Register Member"}
-                </button>
-
-                <button
-                    type="button"
-                    onClick={() => navigate("/members")}
-                    disabled={loading}
-                >
-                    Cancel
-                </button>
             </form>
         </div>
     );
